@@ -55,7 +55,7 @@ export default function Header() {
 
           <div className="hidden gap-3 md:flex">
             <Button className="bg-orange-600 hover:bg-orange-700 transition-colors duration-150">
-              Get full access
+              LogIn
             </Button>
             <Button
               variant="outline"
