@@ -7,15 +7,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
-import { signUp, signUpWithOAuth } from "./actions";
+import { logIn, logInWithOAuth } from "./actions";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sign up",
-  description: "Create your free Paperplane account and start testing APIs today.",
+  title: "Log in",
+  description: "Log in to your Paperplane account to start testing APIs.",
 };
 
-type SignupPageProps = {
+type LoginPageProps = {
   searchParams?: Promise<{
     error?: string;
     message?: string;
@@ -29,7 +29,7 @@ const trustedBrands = [
   { name: "MongoDB", src: "/logos/mongodb-wordmark-light.svg" },
 ];
 
-export default async function SignupPage({ searchParams }: SignupPageProps) {
+export default async function LoginPage({ searchParams }: LoginPageProps) {
   const user = await getCurrentAppwriteUser();
 
   if (user?.emailVerification) {
@@ -61,21 +61,20 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
               </Link>
 
               <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                Create your account
+                Welcome back
               </h1>
               <p className="mt-1.5 text-sm text-slate-500">
-                Sign up to start testing APIs with Paperplane.
+                Log in to continue to Paperplane.
               </p>
 
               {/* OAuth buttons */}
               <div className="mt-6 grid grid-cols-2 gap-3">
-                <form action={signUpWithOAuth}>
+                <form action={logInWithOAuth}>
                   <input type="hidden" name="provider" value="google" />
                   <button
                     type="submit"
                     className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
                   >
-                    {/* Google "G" logo */}
                     <svg viewBox="0 0 24 24" className="size-4 shrink-0" aria-hidden="true">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                       <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -86,13 +85,12 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                   </button>
                 </form>
 
-                <form action={signUpWithOAuth}>
+                <form action={logInWithOAuth}>
                   <input type="hidden" name="provider" value="github" />
                   <button
                     type="submit"
                     className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
                   >
-                    {/* GitHub mark */}
                     <svg viewBox="0 0 24 24" className="size-4 shrink-0 fill-slate-900" aria-hidden="true">
                       <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.089-.745.083-.729.083-.729 1.205.084 1.84 1.236 1.84 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.418-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
                     </svg>
@@ -127,24 +125,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
               )}
 
               {/* Form */}
-              <form action={signUp} className="space-y-5">
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-slate-700"
-                  >
-                    Full name
-                  </label>
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    required
-                    placeholder="Jane Smith"
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
-                  />
-                </div>
-
+              <form action={logIn} className="space-y-5">
                 <div className="space-y-1.5">
                   <label
                     htmlFor="email"
@@ -163,18 +144,25 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-slate-700"
-                  >
-                    Password
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label
+                      htmlFor="password"
+                      className="block text-sm font-medium text-slate-700"
+                    >
+                      Password
+                    </label>
+                    <Link
+                      href="/forgot-password"
+                      className="text-xs font-medium text-orange-600 hover:text-orange-700 transition-colors"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
                   <PasswordInput
                     id="password"
                     name="password"
-                    minLength={8}
                     required
-                    placeholder="min 8 characters"
+                    placeholder="••••••••"
                   />
                 </div>
 
@@ -182,26 +170,26 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                   type="submit"
                   className="w-full h-11 rounded-xl bg-orange-600 text-white font-semibold gap-2 shadow-[0_8px_24px_rgba(234,88,12,0.28)] hover:bg-orange-700 transition-colors"
                 >
-                  Create account
+                  Log in
                   <ArrowRight className="size-4" />
                 </Button>
               </form>
             </div>
 
             <p className="mt-8 text-center text-sm text-slate-500">
-              Already have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link
-                href="/login"
+                href="/signup"
                 className="font-semibold text-orange-600 hover:text-orange-700 transition-colors"
               >
-                Log in
+                Sign up
               </Link>
             </p>
           </CardContent>
 
           {/* ── Right: brand panel ── */}
           <div className="relative hidden lg:flex flex-col justify-between overflow-hidden rounded-r-2xl bg-orange-600 px-10 py-12">
-            {/* Decorative glow */}
+            {/* Decorative glows */}
             <div
               aria-hidden="true"
               className="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full bg-orange-400/30 blur-3xl"
@@ -251,7 +239,6 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                   </div>
                 ))}
               </div>
-              {/* Fake request rows */}
               <div className="space-y-1.5">
                 {[
                   { method: "GET", path: "/api/users", status: "200" },
