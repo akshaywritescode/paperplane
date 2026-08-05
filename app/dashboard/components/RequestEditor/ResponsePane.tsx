@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FileText, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CodeBlock } from "./CodeBlock";
+import { SearchBar } from "./SearchBar";
 import type { ResponseState } from "./index";
 
 type Tab = "response" | "headers";
@@ -23,6 +24,7 @@ function formatSize(bytes: number) {
 
 export function ResponsePane({ response }: { response: ResponseState }) {
   const [tab, setTab] = useState<Tab>("response");
+  const contentRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
@@ -60,7 +62,7 @@ export function ResponsePane({ response }: { response: ResponseState }) {
       )}
 
       {/* Content */}
-      <div className="flex flex-1 overflow-auto">
+      <div ref={contentRef} className="flex flex-1 overflow-auto">
         {response.status === "idle" && (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted-foreground">
             <div className="flex size-16 items-center justify-center rounded-full bg-muted">
@@ -104,6 +106,9 @@ export function ResponsePane({ response }: { response: ResponseState }) {
           </div>
         )}
       </div>
+
+      {/* Search bar */}
+      <SearchBar contentRef={contentRef} />
     </div>
   );
 }

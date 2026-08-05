@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Plus, Trash2, RotateCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -11,6 +11,7 @@ import {
   ContextMenuShortcut,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { SearchBar } from "./SearchBar";
 import type { HttpMethod, ParamRow, HeaderRow } from "./index";
 
 type Props = {
@@ -239,6 +240,7 @@ export function RequestPane({
   onSendToRepeater,
 }: Props) {
   const [tab, setTab] = useState<Tab>("raw");
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // ⌥R (Mac) / Ctrl+R (other) → Send to Repeater
   useEffect(() => {
@@ -291,7 +293,7 @@ export function RequestPane({
       </div>
 
       {/* Tab content */}
-      <div className="flex-1 overflow-auto">
+      <div ref={contentRef} className="flex-1 overflow-auto">
         {tab === "raw" && (
           <div className="h-full overflow-auto bg-background">
             <pre className="p-4 font-mono text-xs leading-[1.6]">
@@ -335,6 +337,8 @@ export function RequestPane({
           />
         )}
       </div>
+      {/* Search bar */}
+      <SearchBar contentRef={contentRef} />
     </ContextMenuTrigger>
 
       <ContextMenuContent>
