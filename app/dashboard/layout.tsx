@@ -8,6 +8,7 @@ import {
 import { AppSidebar } from "./components/AppSidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RepeaterProvider } from "./context/RepeaterContext";
+import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -52,6 +53,7 @@ export default async function DashboardLayout({
         </SidebarInset>
       </SidebarProvider>
     </div>
+    <Toaster position="bottom-right" richColors />
     </RepeaterProvider>
   );
 }
