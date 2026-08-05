@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Trash2, RotateCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -11,7 +11,6 @@ import {
   ContextMenuShortcut,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { SearchBar, HighlightedText } from "./SearchBar";
 import type { HttpMethod, ParamRow, HeaderRow } from "./index";
 
 type Props = {
@@ -129,7 +128,6 @@ function buildRawPreview(
     );
   }
 
-  // Blank separator line
   lines.push(
     <div key={`blank-${lineNum}`} className="flex gap-2">
       <span className={`w-8 shrink-0 select-none text-right ${RAW_COLORS.lineNum}`}>{lineNum++}</span>
@@ -240,47 +238,16 @@ export function RequestPane({
   onSendToRepeater,
 }: Props) {
   const [tab, setTab] = useState<Tab>("raw");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchCurrent, setSearchCurrent] = useState(0);
-  const contentRef = useRef<HTMLDivElement>(null);
 
-  // Build plain text of current tab content for search
-  function getSearchContent(): string {
-    if (tab === "raw") {
-      // Build raw text from the request
-      let text = "";
-      let path = "/";
-      let host = "";
-      try {
-        const fullUrl = url.startsWith("http") ? url : `https://${url}`;
-        const parsed = new URL(fullUrl);
-        host = parsed.host;
-        path = parsed.pathname + parsed.search;
-      } catch { path = url || "/"; }
-      const enabledParams = params.filter((p) => p.enabled && p.name);
-      if (enabledParams.length) {
-        const qs = enabledParams.map((p) => `${encodeURIComponent(p.name)}=${encodeURIComponent(p.value)}`).join("&");
-        path += (path.includes("?") ? "&" : "?") + qs;
-      }
-      text += `${method} ${path} HTTP/1.1\n`;
-      if (host) text += `Host: ${host}\n`;
-      headers.filter((h) => h.enabled && h.name).forEach((h) => { text += `${h.name}: ${h.value}\n`; });
-      if (body && ["POST", "PUT", "PATCH"].includes(method)) {
-        text += `Content-Length: ${new Blob([body]).size}\n\n${body}`;
-      }
-      return text;
-    }
-    if (tab === "params") return params.map((p) => `${p.name}\t${p.value}`).join("\n");
-    if (tab === "headers") return headers.map((h) => `${h.name}\t${h.value}`).join("\n");
-    if (tab === "body") return body;
-    return "";
-  }
+  const isMac = typeof navigator !== "undefined"
+    && /mac/i.test(navigator.userAgent)
+    && !/windows/i.test(navigator.userAgent);
+  const shortcutLabel = isMac ? "⌥R" : "Ctrl+R";
 
-  // ⌥R (Mac) / Ctrl+R (other) → Send to Repeater
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
-      const isMac = /mac/i.test(navigator.userAgent) && !/windows/i.test(navigator.userAgent);
-      const triggered = isMac
+      const mac = /mac/i.test(navigator.userAgent) && !/windows/i.test(navigator.userAgent);
+      const triggered = mac
         ? e.altKey && e.key.toLowerCase() === "r"
         : e.ctrlKey && e.key.toLowerCase() === "r";
       if (triggered) {
@@ -292,92 +259,83 @@ export function RequestPane({
     return () => window.removeEventListener("keydown", handleKey);
   }, [onSendToRepeater]);
 
-  const isMac = typeof navigator !== "undefined" && /mac/i.test(navigator.userAgent) && !/windows/i.test(navigator.userAgent);
-  const shortcutLabel = isMac ? "⌥R" : "Ctrl+R";
-
   return (
     <ContextMenu>
       <ContextMenuTrigger className="flex w-1/2 flex-col overflow-hidden">
-      {/* Tabs */}
-      <div className="flex h-10 shrink-0 items-center border-b">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={cn(
-              "h-full px-4 text-xs font-medium transition-colors border-b-2",
-              tab === t.id
-                ? "border-orange-500 text-orange-600"
-                : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {t.label}
-            {t.id === "params" && params.filter((p) => p.name).length > 0 && (
-              <span className="ml-1.5 rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] text-orange-600">
-                {params.filter((p) => p.name).length}
-              </span>
-            )}
-            {t.id === "headers" && headers.filter((h) => h.name).length > 0 && (
-              <span className="ml-1.5 rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] text-orange-600">
-                {headers.filter((h) => h.name).length}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab content */}
-      <div ref={contentRef} className="flex-1 overflow-auto">
-        {tab === "raw" && (
-          <div className="h-full overflow-auto bg-background">
-            <pre className="p-4 font-mono text-xs leading-[1.6]">
-              {url ? (
-                buildRawPreview(method, url, params, headers, body)
-              ) : (
-                <div className="flex gap-2">
-                  <span className={`w-8 shrink-0 select-none text-right ${RAW_COLORS.lineNum}`}>1</span>
-                  <span className={`italic ${RAW_COLORS.hint}`}>Enter a URL to preview the request...</span>
-                </div>
+        {/* Tabs */}
+        <div className="flex h-10 shrink-0 items-center border-b">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={cn(
+                "h-full px-4 text-xs font-medium transition-colors border-b-2",
+                tab === t.id
+                  ? "border-orange-500 text-orange-600"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
               )}
-            </pre>
-          </div>
-        )}
-        {tab === "params" && (
-          <KeyValueTable
-            rows={params}
-            onChange={onParamsChange}
-            placeholder={{ name: "parameter", value: "value" }}
-          />
-        )}
-        {tab === "headers" && (
-          <KeyValueTable
-            rows={headers}
-            onChange={onHeadersChange}
-            placeholder={{ name: "header", value: "value" }}
-          />
-        )}
-        {tab === "auth" && (
-          <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
-            <p className="text-sm">Auth configuration coming soon</p>
-          </div>
-        )}
-        {tab === "body" && (
-          <textarea
-            value={body}
-            onChange={(e) => onBodyChange(e.target.value)}
-            placeholder='{"key": "value"}'
-            spellCheck={false}
-            className="h-full w-full resize-none bg-transparent p-4 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground"
-          />
-        )}
-      </div>
-      {/* Search bar */}
-      <SearchBar
-        content={getSearchContent()}
-        onQueryChange={setSearchQuery}
-        onCurrentChange={setSearchCurrent}
-      />
-    </ContextMenuTrigger>
+            >
+              {t.label}
+              {t.id === "params" && params.filter((p) => p.name).length > 0 && (
+                <span className="ml-1.5 rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] text-orange-600">
+                  {params.filter((p) => p.name).length}
+                </span>
+              )}
+              {t.id === "headers" && headers.filter((h) => h.name).length > 0 && (
+                <span className="ml-1.5 rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] text-orange-600">
+                  {headers.filter((h) => h.name).length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab content */}
+        <div className="flex-1 overflow-auto">
+          {tab === "raw" && (
+            <div className="h-full overflow-auto bg-background">
+              <pre className="p-4 font-mono text-xs leading-[1.6]">
+                {url ? (
+                  buildRawPreview(method, url, params, headers, body)
+                ) : (
+                  <div className="flex gap-2">
+                    <span className={`w-8 shrink-0 select-none text-right ${RAW_COLORS.lineNum}`}>1</span>
+                    <span className={`italic ${RAW_COLORS.hint}`}>Enter a URL to preview the request...</span>
+                  </div>
+                )}
+              </pre>
+            </div>
+          )}
+          {tab === "params" && (
+            <KeyValueTable
+              rows={params}
+              onChange={onParamsChange}
+              placeholder={{ name: "parameter", value: "value" }}
+            />
+          )}
+          {tab === "headers" && (
+            <KeyValueTable
+              rows={headers}
+              onChange={onHeadersChange}
+              placeholder={{ name: "header", value: "value" }}
+            />
+          )}
+          {tab === "auth" && (
+            <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
+              <p className="text-sm">Auth configuration coming soon</p>
+            </div>
+          )}
+          {tab === "body" && (
+            <textarea
+              value={body}
+              onChange={(e) => onBodyChange(e.target.value)}
+              placeholder='{"key": "value"}'
+              spellCheck={false}
+              className="h-full w-full resize-none bg-transparent p-4 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground"
+            />
+          )}
+        </div>
+      </ContextMenuTrigger>
 
       <ContextMenuContent>
         <ContextMenuItem onClick={onSendToRepeater}>
