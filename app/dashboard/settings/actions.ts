@@ -68,6 +68,8 @@ export async function updateProfileEmail(formData: FormData): Promise<never> {
 
   try {
     await account.updateEmail({ email, password });
+    const origin = await getOrigin();
+    await account.createEmailVerification({ url: `${origin}/auth/verify` });
     message = "Email updated. Check your inbox to verify your new address.";
   } catch (error) {
     isError = true;
