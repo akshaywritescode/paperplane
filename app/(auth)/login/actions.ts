@@ -28,9 +28,12 @@ export async function logIn(formData: FormData) {
   const account = new Account(createAppwriteClient());
   let userId: string;
 
+  let sessionSecret: string;
   try {
     const session = await account.createEmailPasswordSession({ email, password });
     userId = session.userId;
+    sessionSecret = session.secret;
+    await setAppwriteSessionCookie(session);
   } catch (error) {
     redirect(
       `/login?error=${encodeURIComponent(
@@ -39,21 +42,34 @@ export async function logIn(formData: FormData) {
     );
   }
 
-  // Step 2: create a privileged session via the admin client so we get a
-  // populated `secret` we can store in the cookie.
+  let requiresMfa = false;
   try {
-    const admin = createAppwriteAdminClient();
-    const session = await admin.users.createSession({ userId: userId! });
-    await setAppwriteSessionCookie(session);
-  } catch (error) {
-    redirect(
-      `/login?error=${encodeURIComponent(
-        error instanceof Error ? error.message : "Unable to create session",
-      )}`,
-    );
+    const sessionClient = new Account(createAppwriteClient().setSession(sessionSecret));
+    await sessionClient.get();
+  } catch (error: any) {
+    if (error?.type === "user_more_factors_required") {
+      requiresMfa = true;
+    } else {
+      redirect(`/login?error=${encodeURIComponent(error.message)}`);
+    }
   }
 
-  redirect("/dashboard");
+  if (requiresMfa) {
+    redirect("/login/mfa");
+  } else {
+    try {
+      const admin = createAppwriteAdminClient();
+      const adminSession = await admin.users.createSession({ userId: userId! });
+      await setAppwriteSessionCookie(adminSession);
+    } catch (error) {
+      redirect(
+        `/login?error=${encodeURIComponent(
+          error instanceof Error ? error.message : "Unable to create session",
+        )}`,
+      );
+    }
+    redirect("/dashboard");
+  }
 }
 
 export async function logInWithOAuth(formData: FormData) {

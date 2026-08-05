@@ -1,5 +1,6 @@
 import { Account, Client, Users, Storage } from "node-appwrite";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export const APPWRITE_SESSION_COOKIE = "paperplane_appwrite_session";
 
@@ -63,7 +64,14 @@ export async function getCurrentAppwriteUser() {
     return null;
   }
 
-  return appwrite.account.get().catch(() => null);
+  try {
+    return await appwrite.account.get();
+  } catch (error: any) {
+    if (error?.type === "user_more_factors_required") {
+      redirect("/login/mfa");
+    }
+    return null;
+  }
 }
 
 export async function setAppwriteSessionCookie(session: {
