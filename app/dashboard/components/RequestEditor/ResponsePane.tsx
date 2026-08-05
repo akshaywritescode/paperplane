@@ -86,7 +86,13 @@ export function ResponsePane({ response, onClear }: { response: ResponseState; o
                 <DropdownMenuItem className="flex items-center justify-between text-xs">
                   Copy All <Copy className="size-3.5 text-muted-foreground" />
                 </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center justify-between text-xs">
+                <DropdownMenuItem className="flex items-center justify-between text-xs" onClick={() => {
+                  if (response.status !== "done") return;
+                  const text = Object.entries(response.headers)
+                    .map(([k, v]) => `${k}: ${v}`)
+                    .join("\n");
+                  navigator.clipboard.writeText(text);
+                }}>
                   Copy Headers <ListFilter className="size-3.5 text-muted-foreground" />
                 </DropdownMenuItem>
                 <DropdownMenuItem className="flex items-center justify-between text-xs">
