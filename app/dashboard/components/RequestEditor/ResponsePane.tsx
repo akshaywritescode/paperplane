@@ -43,16 +43,16 @@ const LANG_ICONS: Record<Lang, React.ReactNode> = {
     </svg>
   ),
   css: (
-    // Blue square with "css" feel — triple lines + dot
+    // # selector symbol
     <svg viewBox="0 0 16 16" className="size-3 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
-      <path d="M3 4h7M3 8h10M3 12h5"/>
-      <circle cx="13" cy="12" r="1" fill="currentColor" stroke="none"/>
+      <path d="M3 6h10M3 10h10M6 3v10M10 3v10"/>
     </svg>
   ),
   javascript: (
-    // JS — simple "( )" parens with semicolon feel
-    <svg viewBox="0 0 16 16" className="size-3 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M10 3v7a2 2 0 01-4 0M6 6h4"/>
+    // JS — semicolon + dot (minimalist)
+    <svg viewBox="0 0 16 16" className="size-3 shrink-0" fill="currentColor" aria-hidden="true">
+      <rect x="2" y="2" width="12" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M6 10.5a1.5 1.5 0 01-3 0V7h1.5v3.5a.5.5 0 001 0M9 7h3v1.5h-1.5V11a2 2 0 01-2 2v-1.5a.5.5 0 00.5-.5V8.5H9V7z"/>
     </svg>
   ),
 };
