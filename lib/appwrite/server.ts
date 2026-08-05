@@ -1,4 +1,4 @@
-import { Account, Client, Users } from "node-appwrite";
+import { Account, Client, Users, Storage } from "node-appwrite";
 import { cookies } from "next/headers";
 
 export const APPWRITE_SESSION_COOKIE = "paperplane_appwrite_session";
@@ -36,6 +36,7 @@ export function createAppwriteAdminClient() {
   return {
     account: new Account(client),
     users: new Users(client),
+    storage: new Storage(client),
   };
 }
 
@@ -51,6 +52,7 @@ export async function createAppwriteSessionClient() {
 
   return {
     account: new Account(client),
+    storage: new Storage(client),
   };
 }
 

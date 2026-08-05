@@ -3,6 +3,8 @@
 import { createAppwriteSessionClient } from "@/lib/appwrite/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { ID } from "node-appwrite";
+import { InputFile } from "node-appwrite/file";
 
 type ActionResult = { success: boolean; message: string };
 
@@ -154,5 +156,98 @@ export async function sendPasswordResetEmail(): Promise<ActionResult> {
       success: false,
       message: error instanceof Error ? error.message : "Unable to send password reset email",
     };
+  }
+}
+
+export async function updateProfileAvatar(formData: FormData): Promise<never> {
+  const file = formData.get("avatar") as File | null;
+  if (!file || file.size === 0) {
+    redirect("/dashboard/settings/profile?error=No%20file%20provided");
+  }
+
+  if (!file.type.startsWith("image/")) {
+    redirect("/dashboard/settings/profile?error=File%20must%20be%20an%20image");
+  }
+
+  const appwrite = await createAppwriteSessionClient();
+  if (!appwrite) redirect("/login?error=Please%20log%20in%20first");
+
+  const bucketId = process.env.NEXT_PUBLIC_APPWRITE_AVATARS_BUCKET_ID;
+  if (!bucketId) {
+    redirect("/dashboard/settings/profile?error=Avatars%20bucket%20not%20configured");
+  }
+
+  let isError = false;
+  let message = "";
+
+  try {
+    const user = await appwrite.account.get();
+    
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const inputFile = InputFile.fromBuffer(buffer, file.name);
+
+    const uploadedFile = await appwrite.storage.createFile(
+      bucketId,
+      ID.unique(),
+      inputFile
+    );
+
+    const newPrefs = { ...user.prefs, avatarId: uploadedFile.$id };
+    await appwrite.account.updatePrefs(newPrefs);
+
+    if (user.prefs.avatarId) {
+      try {
+        await appwrite.storage.deleteFile(bucketId, user.prefs.avatarId);
+      } catch (e) {}
+    }
+
+    message = "Profile picture updated successfully";
+  } catch (error) {
+    isError = true;
+    message = error instanceof Error ? error.message : "Unable to upload profile picture";
+  }
+
+  if (isError) {
+    redirect(`/dashboard/settings/profile?error=${encodeURIComponent(message)}`);
+  } else {
+    redirect(`/dashboard/settings/profile?message=${encodeURIComponent(message)}`);
+  }
+}
+
+export async function deleteProfileAvatar(): Promise<never> {
+  const appwrite = await createAppwriteSessionClient();
+  if (!appwrite) redirect("/login?error=Please%20log%20in%20first");
+
+  const bucketId = process.env.NEXT_PUBLIC_APPWRITE_AVATARS_BUCKET_ID;
+
+  let isError = false;
+  let message = "";
+
+  try {
+    const user = await appwrite.account.get();
+    
+    if (user.prefs.avatarId && bucketId) {
+      try {
+        await appwrite.storage.deleteFile(bucketId, user.prefs.avatarId);
+      } catch (e) {}
+      
+      const newPrefs = { ...user.prefs };
+      delete newPrefs.avatarId;
+      await appwrite.account.updatePrefs(newPrefs);
+      message = "Profile picture removed successfully";
+    } else {
+      isError = true;
+      message = "No profile picture to remove";
+    }
+  } catch (error) {
+    isError = true;
+    message = error instanceof Error ? error.message : "Unable to remove profile picture";
+  }
+
+  if (isError) {
+    redirect(`/dashboard/settings/profile?error=${encodeURIComponent(message)}`);
+  } else {
+    redirect(`/dashboard/settings/profile?message=${encodeURIComponent(message)}`);
   }
 }
