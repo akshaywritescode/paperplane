@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileText, Loader2, AlertCircle, MoreVertical, Copy, ListFilter, Download, Trash2, ChevronsUpDown, Check } from "lucide-react";
 import { SiCss, SiHtml5, SiJavascript, SiJson, SiXml } from "@icons-pack/react-simple-icons";
 import { cn } from "@/lib/utils";
-import { CodeBlock } from "./CodeBlock";
+import { CodeBlock, detectLang } from "./CodeBlock";
 import { SearchBar, HighlightedText } from "./SearchBar";
 import {
   DropdownMenu,
@@ -15,14 +15,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { ResponseState } from "./index";
 
-type Lang = "auto" | "json" | "html" | "xml" | "text" | "css" | "javascript";
+type Lang = "json" | "html" | "xml" | "text" | "css" | "javascript";
 
 const LANG_ICONS: Record<Lang, React.ReactNode> = {
-  auto: (
-    <svg viewBox="0 0 16 16" className="size-3.5 shrink-0" fill="currentColor" aria-hidden="true">
-      <path d="M8 1l1.2 3.8L13 5.2l-3 2.2 1 3.8L8 9.4l-3 1.8 1-3.8-3-2.2 3.8-.4z"/>
-    </svg>
-  ),
   json:       <SiJson       className="size-3.5 shrink-0" />,
   html:       <SiHtml5      className="size-3.5 shrink-0" />,
   xml:        <SiXml        className="size-3.5 shrink-0" />,
@@ -36,7 +31,6 @@ const LANG_ICONS: Record<Lang, React.ReactNode> = {
 };
 
 const LANGS: { value: Lang; label: string }[] = [
-  { value: "auto",       label: "Auto"       },
   { value: "json",       label: "JSON"       },
   { value: "html",       label: "HTML"       },
   { value: "xml",        label: "XML"        },
@@ -62,9 +56,17 @@ function formatSize(bytes: number) {
 
 export function ResponsePane({ response, onClear, url = "" }: { response: ResponseState; onClear: () => void; url?: string }) {
   const [tab, setTab] = useState<Tab>("response");
-  const [lang, setLang] = useState<Lang>("auto");
+  const [lang, setLang] = useState<Lang>("text");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCurrent, setSearchCurrent] = useState(0);
+
+  // Auto-detect language whenever a new response arrives
+  useEffect(() => {
+    if (response.status === "done") {
+      const ct = response.headers["content-type"] ?? "";
+      setLang(detectLang(response.body, ct));
+    }
+  }, [response]);
 
   function downloadResponse() {
     if (response.status !== "done") return;
@@ -252,7 +254,7 @@ export function ResponsePane({ response, onClear, url = "" }: { response: Respon
         {response.status === "done" && tab === "response" && (
           <CodeBlock
             code={response.body}
-            lang={lang === "auto" ? undefined : lang}
+            lang={lang}
             searchQuery={searchQuery}
             searchCurrent={searchCurrent}
           />

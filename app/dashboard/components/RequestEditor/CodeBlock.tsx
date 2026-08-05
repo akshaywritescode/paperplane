@@ -10,7 +10,17 @@ type Props = {
   searchCurrent?: number;
 };
 
-function detectLang(code: string): "json" | "html" | "xml" | "text" | "css" | "javascript" {
+export function detectLang(code: string, contentType?: string): "json" | "html" | "xml" | "text" | "css" | "javascript" {
+  // First try content-type header
+  if (contentType) {
+    if (contentType.includes("json")) return "json";
+    if (contentType.includes("html")) return "html";
+    if (contentType.includes("xml")) return "xml";
+    if (contentType.includes("css")) return "css";
+    if (contentType.includes("javascript") || contentType.includes("ecmascript")) return "javascript";
+    if (contentType.includes("text/plain")) return "text";
+  }
+  // Fall back to body sniffing
   const trimmed = code.trimStart();
   if (trimmed.startsWith("{") || trimmed.startsWith("[")) return "json";
   if (trimmed.startsWith("<!DOCTYPE") || trimmed.startsWith("<html")) return "html";
