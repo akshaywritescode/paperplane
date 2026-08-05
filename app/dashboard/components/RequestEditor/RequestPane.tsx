@@ -339,7 +339,7 @@ export function RequestPane({
 
       <ContextMenuContent>
         <ContextMenuItem onSelect={onSendToRepeater}>
-          <RotateCw className="size-4" />
+          <RotateCw className="size-3" />
           Send to Repeater
           <ContextMenuShortcut>{shortcutLabel}</ContextMenuShortcut>
         </ContextMenuItem>
