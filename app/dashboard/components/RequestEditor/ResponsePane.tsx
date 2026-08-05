@@ -78,7 +78,7 @@ export function ResponsePane({
                   key={t}
                   onClick={() => setTab(t)}
                   className={cn(
-                    "h-full px-3 text-xs font-medium capitalize transition-colors border-b-2",
+                    "h-10 px-3 text-xs font-medium capitalize transition-colors border-b-2",
                     tab === t
                       ? "border-orange-500 text-orange-600"
                       : "border-transparent text-muted-foreground hover:text-foreground",
