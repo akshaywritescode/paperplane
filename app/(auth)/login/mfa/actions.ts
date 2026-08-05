@@ -23,13 +23,7 @@ export async function verifyLoginMfa(formData: FormData) {
     const challenge = await appwrite.account.createMFAChallenge(AuthenticationFactor.Totp);
     await appwrite.account.updateMFAChallenge(challenge.$id, code);
 
-    // If we reach here, MFA is satisfied.
-    const user = await appwrite.account.get();
-    
-    // Elevate to admin session
-    const admin = createAppwriteAdminClient();
-    const newSession = await admin.users.createSession({ userId: user.$id });
-    await setAppwriteSessionCookie(newSession);
+    // If we reach here, MFA is satisfied. The session is fully verified on the backend.
   } catch (error: any) {
     redirect(
       `/login/mfa?error=${encodeURIComponent(
