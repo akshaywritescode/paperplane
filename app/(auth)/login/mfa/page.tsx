@@ -1,7 +1,7 @@
 import { Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { verifyLoginMfa } from "./actions";
+import { verifyLoginMfa, cancelMfaLogin } from "./actions";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -63,11 +63,11 @@ export default async function MfaPage({ searchParams }: MfaPageProps) {
           </div>
         </form>
 
-        <p className="px-8 text-center text-sm text-muted-foreground">
-          <Link href="/login" className="hover:text-primary underline underline-offset-4">
+        <form action={cancelMfaLogin} className="px-8 text-center text-sm text-muted-foreground">
+          <button type="submit" className="hover:text-primary underline underline-offset-4 bg-transparent border-none p-0 cursor-pointer text-muted-foreground">
             Cancel and return to login
-          </Link>
-        </p>
+          </button>
+        </form>
       </div>
     </div>
   );

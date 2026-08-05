@@ -40,3 +40,19 @@ export async function verifyLoginMfa(formData: FormData) {
 
   redirect("/dashboard");
 }
+
+export async function cancelMfaLogin() {
+  const appwrite = await createAppwriteSessionClient();
+  if (appwrite) {
+    try {
+      await appwrite.account.deleteSession('current');
+    } catch (e) {
+      // Ignore errors if session is already invalid
+    }
+  }
+  
+  const { clearAppwriteSessionCookie } = await import("@/lib/appwrite/server");
+  await clearAppwriteSessionCookie();
+  
+  redirect("/login");
+}
