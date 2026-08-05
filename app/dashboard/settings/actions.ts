@@ -281,6 +281,7 @@ export async function verifyTotp(formData: FormData): Promise<never> {
 
   try {
     await account.updateMFAAuthenticator(AuthenticatorType.Totp, code);
+    await account.updateMFA(true);
     message = "Two-Factor Authentication enabled successfully!";
   } catch (error) {
     isError = true;
@@ -301,6 +302,7 @@ export async function disableTotp(): Promise<never> {
 
   try {
     await account.deleteMFAAuthenticator(AuthenticatorType.Totp);
+    await account.updateMFA(false);
     message = "Two-Factor Authentication disabled";
   } catch (error) {
     isError = true;
