@@ -24,13 +24,11 @@ export async function logIn(formData: FormData) {
   // Step 1: verify credentials with a regular client session.
   // createEmailPasswordSession returns a session whose `secret` is only
   // populated when called with an API key. We use this call purely to
-  // confirm the credentials are valid and to get the userId.
-  const account = new Account(createAppwriteClient());
   let userId: string;
-
   let sessionSecret: string;
   try {
-    const session = await account.createEmailPasswordSession({ email, password });
+    const admin = createAppwriteAdminClient();
+    const session = await admin.account.createEmailPasswordSession(email, password);
     userId = session.userId;
     sessionSecret = session.secret;
     await setAppwriteSessionCookie(session);
