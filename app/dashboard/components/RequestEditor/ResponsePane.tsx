@@ -95,7 +95,10 @@ export function ResponsePane({ response, onClear }: { response: ResponseState; o
                 }}>
                   Copy Headers <ListFilter className="size-3.5 text-muted-foreground" />
                 </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center justify-between text-xs">
+                <DropdownMenuItem className="flex items-center justify-between text-xs" onClick={() => {
+                  if (response.status !== "done") return;
+                  navigator.clipboard.writeText(response.body);
+                }}>
                   Copy Body <FileText className="size-3.5 text-muted-foreground" />
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
