@@ -182,10 +182,7 @@ export function RequestEditor() {
           onSendToRepeater={sendToRepeater}
         />
         <div className="w-px bg-border shrink-0" />
-        <ResponsePane
-          response={response}
-          request={{ tab: activeTab, params, headers, body }}
-        />
+        <ResponsePane response={response} />
       </div>
     </div>
   );

@@ -177,20 +177,6 @@ export function RepeaterEditor() {
   }
 
   const state = activeTab ? getTabState(activeTab.id) : null;
-  const requestForPane: { tab: RequestTab; params: ParamRow[]; headers: HeaderRow[]; body: string } | null =
-    activeTab && state
-      ? {
-          tab: {
-            id: activeTab.id,
-            name: activeTab.name,
-            method: activeTab.method,
-            url: activeTab.url,
-          },
-          params: state.params,
-          headers: state.headers,
-          body: state.body,
-        }
-      : null;
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
@@ -291,10 +277,7 @@ export function RepeaterEditor() {
               }}
             />
             <div className="w-px bg-border shrink-0" />
-            <ResponsePane
-              response={state.response}
-              request={requestForPane!}
-            />
+            <ResponsePane response={state.response} />
           </div>
         </>
       ) : null}
