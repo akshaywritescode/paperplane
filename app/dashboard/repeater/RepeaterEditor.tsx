@@ -277,7 +277,10 @@ export function RepeaterEditor() {
               }}
             />
             <div className="w-px bg-border shrink-0" />
-            <ResponsePane response={state.response} />
+            <ResponsePane
+              response={state.response}
+              onClear={() => setTabState(activeTab.id, { response: { status: "idle" } })}
+            />
           </div>
         </>
       ) : null}

@@ -29,7 +29,7 @@ function formatSize(bytes: number) {
   return `${(bytes / 1024).toFixed(1)} KB`;
 }
 
-export function ResponsePane({ response }: { response: ResponseState }) {
+export function ResponsePane({ response, onClear }: { response: ResponseState; onClear: () => void }) {
   const [tab, setTab] = useState<Tab>("response");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCurrent, setSearchCurrent] = useState(0);
@@ -97,7 +97,7 @@ export function ResponsePane({ response }: { response: ResponseState }) {
                   Download Response <Download className="size-3.5 text-muted-foreground" />
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="flex items-center justify-between text-xs text-destructive">
+                <DropdownMenuItem className="flex items-center justify-between text-xs text-destructive" onClick={onClear}>
                   Clear Response <Trash2 className="size-3.5" />
                 </DropdownMenuItem>
               </DropdownMenuContent>
