@@ -16,6 +16,39 @@ import type { ResponseState } from "./index";
 
 type Lang = "auto" | "json" | "html" | "xml" | "text";
 
+const LANG_ICONS: Record<Lang, React.ReactNode> = {
+  auto: (
+    // Sparkle / wand — "auto detect"
+    <svg viewBox="0 0 16 16" className="size-3 shrink-0" fill="currentColor" aria-hidden="true">
+      <path d="M8 1l1.2 3.8L13 5.2l-3 2.2 1 3.8L8 9.4l-3 1.8 1-3.8-3-2.2 3.8-.4z"/>
+    </svg>
+  ),
+  json: (
+    // Curly braces
+    <svg viewBox="0 0 16 16" className="size-3 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 3C4 3 3 3.5 3 5v1.5C3 7.3 2.5 7.7 2 8c.5.3 1 .7 1 1.5V11c0 1.5 1 2 2 2M11 3c1 0 2 .5 2 2v1.5c0 .8.5 1.2 1 1.5-.5.3-1 .7-1 1.5V11c0 1.5-1 2-2 2"/>
+    </svg>
+  ),
+  html: (
+    // HTML5 diamond shape simplified
+    <svg viewBox="0 0 16 16" className="size-3 shrink-0" fill="currentColor" aria-hidden="true">
+      <path d="M1.5 1l1.1 12L8 14.5l5.4-1.5L14.5 1zm2 2h9l-.3 3H5.8l.2 2h6.4l-.8 5L8 14l-3.6-1-.2-2.5H6l.1 1.4L8 12.4l1.9-.5.2-2.4H5.6z"/>
+    </svg>
+  ),
+  xml: (
+    // Angle brackets < />
+    <svg viewBox="0 0 16 16" className="size-3 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 5L2 8l3 3M11 5l3 3-3 3M9 4l-2 8"/>
+    </svg>
+  ),
+  text: (
+    // Lines of text
+    <svg viewBox="0 0 16 16" className="size-3 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+      <path d="M3 5h10M3 8h7M3 11h5"/>
+    </svg>
+  ),
+};
+
 const LANGS: { value: Lang; label: string }[] = [
   { value: "auto",  label: "Auto"  },
   { value: "json",  label: "JSON"  },
@@ -131,18 +164,22 @@ export function ResponsePane({ response, onClear, url = "" }: { response: Respon
             {/* Language selector — only relevant on response tab */}
             {tab === "response" && (
               <DropdownMenu>
-                <DropdownMenuTrigger className="ml-2 flex items-center gap-1 rounded-md border border-border bg-muted/50 px-2 py-1 text-xs font-medium text-foreground transition hover:bg-muted outline-none">
+                <DropdownMenuTrigger className="ml-2 flex items-center gap-1.5 rounded-md border border-border bg-muted/50 px-2 py-1 text-xs font-medium text-foreground transition hover:bg-muted outline-none">
                   {LANGS.find((l) => l.value === lang)?.label ?? "Auto"}
+                  {LANG_ICONS[lang]}
                   <ChevronsUpDown className="size-3 text-muted-foreground" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent side="bottom" align="end" sideOffset={4} className="w-32">
+                <DropdownMenuContent side="bottom" align="end" sideOffset={4} className="w-36">
                   {LANGS.map((l) => (
                     <DropdownMenuItem
                       key={l.value}
                       onClick={() => setLang(l.value)}
                       className="flex items-center justify-between text-xs"
                     >
-                      {l.label}
+                      <span className="flex items-center gap-2">
+                        {LANG_ICONS[l.value]}
+                        {l.label}
+                      </span>
                       {lang === l.value && <Check className="size-3.5 text-orange-500" />}
                     </DropdownMenuItem>
                   ))}
