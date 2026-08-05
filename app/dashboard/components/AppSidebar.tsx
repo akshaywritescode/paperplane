@@ -81,11 +81,11 @@ export function AppSidebar({
                     render={<Link href={item.href} />}
                     isActive={pathname === item.href}
                     tooltip={item.label}
+                    className="text-xs [&_svg]:size-3.5"
                   >
                     <item.icon />
                     <span>{item.label}</span>
                   </SidebarMenuButton>
-                  {/* Repeater tab count badge */}
                   {item.href === "/dashboard/repeater" && repeaterTabs.length > 0 && (
                     <SidebarMenuBadge>{repeaterTabs.length}</SidebarMenuBadge>
                   )}
@@ -105,6 +105,7 @@ export function AppSidebar({
                     render={<Link href={item.href} />}
                     isActive={pathname === item.href}
                     tooltip={item.label}
+                    className="text-xs [&_svg]:size-3.5"
                   >
                     <item.icon />
                     <span>{item.label}</span>

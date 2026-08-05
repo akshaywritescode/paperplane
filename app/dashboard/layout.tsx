@@ -34,7 +34,7 @@ export default async function DashboardLayout({
   return (
     <RepeaterProvider>
     <div className="flex h-svh w-full overflow-hidden">
-      <SidebarProvider>
+      <SidebarProvider style={{ "--sidebar-width": "13rem" } as React.CSSProperties}>
         <AppSidebar user={{ name: user.name, email: user.email }} />
         <SidebarInset className="flex flex-col overflow-hidden">
           {/* ── Top bar ── */}
