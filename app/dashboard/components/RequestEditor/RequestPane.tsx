@@ -11,7 +11,7 @@ import {
   ContextMenuShortcut,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { SearchBar } from "./SearchBar";
+import { SearchBar, HighlightedText } from "./SearchBar";
 import type { HttpMethod, ParamRow, HeaderRow } from "./index";
 
 type Props = {
@@ -240,7 +240,41 @@ export function RequestPane({
   onSendToRepeater,
 }: Props) {
   const [tab, setTab] = useState<Tab>("raw");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchCurrent, setSearchCurrent] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // Build plain text of current tab content for search
+  function getSearchContent(): string {
+    if (tab === "raw") {
+      // Build raw text from the request
+      let text = "";
+      let path = "/";
+      let host = "";
+      try {
+        const fullUrl = url.startsWith("http") ? url : `https://${url}`;
+        const parsed = new URL(fullUrl);
+        host = parsed.host;
+        path = parsed.pathname + parsed.search;
+      } catch { path = url || "/"; }
+      const enabledParams = params.filter((p) => p.enabled && p.name);
+      if (enabledParams.length) {
+        const qs = enabledParams.map((p) => `${encodeURIComponent(p.name)}=${encodeURIComponent(p.value)}`).join("&");
+        path += (path.includes("?") ? "&" : "?") + qs;
+      }
+      text += `${method} ${path} HTTP/1.1\n`;
+      if (host) text += `Host: ${host}\n`;
+      headers.filter((h) => h.enabled && h.name).forEach((h) => { text += `${h.name}: ${h.value}\n`; });
+      if (body && ["POST", "PUT", "PATCH"].includes(method)) {
+        text += `Content-Length: ${new Blob([body]).size}\n\n${body}`;
+      }
+      return text;
+    }
+    if (tab === "params") return params.map((p) => `${p.name}\t${p.value}`).join("\n");
+    if (tab === "headers") return headers.map((h) => `${h.name}\t${h.value}`).join("\n");
+    if (tab === "body") return body;
+    return "";
+  }
 
   // ⌥R (Mac) / Ctrl+R (other) → Send to Repeater
   useEffect(() => {
@@ -297,14 +331,14 @@ export function RequestPane({
         {tab === "raw" && (
           <div className="h-full overflow-auto bg-background">
             <pre className="p-4 font-mono text-xs leading-[1.6]">
-              {url
-                ? buildRawPreview(method, url, params, headers, body)
-                : (
-                  <div className="flex gap-2">
-                    <span className={`w-8 shrink-0 select-none text-right ${RAW_COLORS.lineNum}`}>1</span>
-                    <span className={`italic ${RAW_COLORS.hint}`}>Enter a URL to preview the request...</span>
-                  </div>
-                )}
+              {url ? (
+                buildRawPreview(method, url, params, headers, body)
+              ) : (
+                <div className="flex gap-2">
+                  <span className={`w-8 shrink-0 select-none text-right ${RAW_COLORS.lineNum}`}>1</span>
+                  <span className={`italic ${RAW_COLORS.hint}`}>Enter a URL to preview the request...</span>
+                </div>
+              )}
             </pre>
           </div>
         )}
@@ -338,7 +372,11 @@ export function RequestPane({
         )}
       </div>
       {/* Search bar */}
-      <SearchBar contentRef={contentRef} />
+      <SearchBar
+        content={getSearchContent()}
+        onQueryChange={setSearchQuery}
+        onCurrentChange={setSearchCurrent}
+      />
     </ContextMenuTrigger>
 
       <ContextMenuContent>

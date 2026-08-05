@@ -6,6 +6,8 @@ import { getSingletonHighlighter } from "shiki";
 type Props = {
   code: string;
   lang?: "json" | "html" | "xml" | "text";
+  searchQuery?: string;
+  searchCurrent?: number;
 };
 
 function detectLang(code: string): "json" | "html" | "xml" | "text" {
@@ -53,7 +55,7 @@ function useDarkMode() {
   return dark;
 }
 
-export function CodeBlock({ code, lang }: Props) {
+export function CodeBlock({ code, lang, searchQuery = "", searchCurrent = 0 }: Props) {
   const dark = useDarkMode();
   const [html, setHtml] = useState<string>("");
   const resolvedLang = lang ?? detectLang(code);
@@ -78,6 +80,24 @@ export function CodeBlock({ code, lang }: Props) {
       setHtml(injectLineNumbers(raw));
     });
   }, [displayCode, resolvedLang, theme]);
+
+  // Apply search highlights on top of shiki HTML
+  function applySearch(rawHtml: string): string {
+    if (!searchQuery.trim()) return rawHtml;
+    const escaped = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(${escaped})`, "gi");
+    let matchIdx = 0;
+    return rawHtml.replace(/>([^<]+)</g, (full, text: string) => {
+      if (!regex.test(text)) { regex.lastIndex = 0; return full; }
+      regex.lastIndex = 0;
+      const replaced = text.replace(regex, (m) => {
+        const isCurrent = matchIdx === searchCurrent;
+        matchIdx++;
+        return `<mark style="background:${isCurrent ? "#f97316" : "#fde047"};color:#000;border-radius:2px${isCurrent ? ";outline:2px solid #f97316;outline-offset:1px" : ""}">${m}</mark>`;
+      });
+      return `>${replaced}<`;
+    });
+  }
 
   if (!html) {
     const lines = displayCode.split("\n");
@@ -128,7 +148,7 @@ export function CodeBlock({ code, lang }: Props) {
       `}</style>
       <div
         className="shiki-block flex-1 overflow-auto bg-background"
-        dangerouslySetInnerHTML={{ __html: html }}
+        dangerouslySetInnerHTML={{ __html: applySearch(html) }}
       />
     </>
   );

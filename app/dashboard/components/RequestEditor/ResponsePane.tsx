@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { FileText, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CodeBlock } from "./CodeBlock";
-import { SearchBar } from "./SearchBar";
+import { SearchBar, HighlightedText } from "./SearchBar";
 import type { ResponseState } from "./index";
 
 type Tab = "response" | "headers";
@@ -24,11 +24,23 @@ function formatSize(bytes: number) {
 
 export function ResponsePane({ response }: { response: ResponseState }) {
   const [tab, setTab] = useState<Tab>("response");
-  const contentRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchCurrent, setSearchCurrent] = useState(0);
+
+  function getSearchContent(): string {
+    if (response.status !== "done") return "";
+    if (tab === "response") return response.body;
+    if (tab === "headers") {
+      return Object.entries(response.headers)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join("\n");
+    }
+    return "";
+  }
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      {/* Status bar — only shown when done */}
+      {/* Status bar */}
       {response.status === "done" && (
         <div className="flex h-10 shrink-0 items-center gap-3 border-b px-4">
           <span
@@ -62,7 +74,7 @@ export function ResponsePane({ response }: { response: ResponseState }) {
       )}
 
       {/* Content */}
-      <div ref={contentRef} className="flex flex-1 overflow-auto">
+      <div className="flex flex-1 overflow-auto">
         {response.status === "idle" && (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted-foreground">
             <div className="flex size-16 items-center justify-center rounded-full bg-muted">
@@ -92,15 +104,34 @@ export function ResponsePane({ response }: { response: ResponseState }) {
         )}
 
         {response.status === "done" && tab === "response" && (
-          <CodeBlock code={response.body} />
+          <CodeBlock
+            code={response.body}
+            searchQuery={searchQuery}
+            searchCurrent={searchCurrent}
+          />
         )}
 
         {response.status === "done" && tab === "headers" && (
           <div className="flex-1 overflow-auto">
             {Object.entries(response.headers).map(([k, v]) => (
-              <div key={k} className="grid grid-cols-[12rem_1fr] border-b px-4 py-2 text-xs hover:bg-muted/30">
-                <span className="font-medium text-muted-foreground truncate pr-3">{k}</span>
-                <span className="font-mono text-foreground break-all">{v}</span>
+              <div
+                key={k}
+                className="grid grid-cols-[12rem_1fr] border-b px-4 py-2 text-xs hover:bg-muted/30"
+              >
+                <span className="font-medium text-muted-foreground truncate pr-3">
+                  <HighlightedText
+                    text={k}
+                    query={searchQuery}
+                    current={-1}
+                  />
+                </span>
+                <span className="font-mono text-foreground break-all">
+                  <HighlightedText
+                    text={v}
+                    query={searchQuery}
+                    current={-1}
+                  />
+                </span>
               </div>
             ))}
           </div>
@@ -108,7 +139,11 @@ export function ResponsePane({ response }: { response: ResponseState }) {
       </div>
 
       {/* Search bar */}
-      <SearchBar contentRef={contentRef} />
+      <SearchBar
+        content={getSearchContent()}
+        onQueryChange={setSearchQuery}
+        onCurrentChange={setSearchCurrent}
+      />
     </div>
   );
 }
