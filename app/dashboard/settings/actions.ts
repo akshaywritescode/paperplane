@@ -3,7 +3,7 @@
 import { createAppwriteSessionClient } from "@/lib/appwrite/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { ID } from "node-appwrite";
+import { ID, AuthenticatorType } from "node-appwrite";
 import { InputFile } from "node-appwrite/file";
 
 type ActionResult = { success: boolean; message: string };
@@ -107,29 +107,36 @@ export async function resendEmailVerification(): Promise<never> {
   }
 }
 
-export async function updatePassword(formData: FormData): Promise<ActionResult> {
+export async function updatePassword(formData: FormData): Promise<never> {
   const password = getFormValue(formData, "password");
   const confirmPassword = getFormValue(formData, "confirmPassword");
   const oldPassword = getFormValue(formData, "oldPassword");
 
   if (!password || password.length < 8) {
-    return { success: false, message: "Password must be at least 8 characters" };
+    redirect("/dashboard/settings/security?error=Password%20must%20be%20at%20least%208%20characters");
   }
 
   if (password !== confirmPassword) {
-    return { success: false, message: "Passwords do not match" };
+    redirect("/dashboard/settings/security?error=Passwords%20do%20not%20match");
   }
 
   const account = await requireAccount();
 
+  let isError = false;
+  let message = "";
+
   try {
-    await account.updatePassword({ password, oldPassword: oldPassword || undefined });
-    return { success: true, message: "Password updated successfully" };
+    await account.updatePassword(password, oldPassword || undefined);
+    message = "Password updated successfully";
   } catch (error) {
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : "Unable to update password",
-    };
+    isError = true;
+    message = error instanceof Error ? error.message : "Unable to update password";
+  }
+
+  if (isError) {
+    redirect(`/dashboard/settings/security?error=${encodeURIComponent(message)}`);
+  } else {
+    redirect(`/dashboard/settings/security?message=${encodeURIComponent(message)}`);
   }
 }
 
@@ -249,5 +256,70 @@ export async function deleteProfileAvatar(): Promise<never> {
     redirect(`/dashboard/settings/profile?error=${encodeURIComponent(message)}`);
   } else {
     redirect(`/dashboard/settings/profile?message=${encodeURIComponent(message)}`);
+  }
+}
+
+export async function setupTotp() {
+  const account = await requireAccount();
+  try {
+    const authenticator = await account.createMFAAuthenticator(AuthenticatorType.Totp);
+    return { success: true, uri: authenticator.uri, secret: authenticator.secret };
+  } catch (error) {
+    return { success: false, message: error instanceof Error ? error.message : "Unable to setup TOTP" };
+  }
+}
+
+export async function verifyTotp(formData: FormData): Promise<never> {
+  const code = getFormValue(formData, "code");
+  if (!code) {
+    redirect("/dashboard/settings/security?error=Verification%20code%20is%20required");
+  }
+
+  const account = await requireAccount();
+  let isError = false;
+  let message = "";
+
+  try {
+    await account.updateMFAAuthenticator(AuthenticatorType.Totp, code);
+    message = "Two-Factor Authentication enabled successfully!";
+  } catch (error) {
+    isError = true;
+    message = error instanceof Error ? error.message : "Invalid verification code";
+  }
+
+  if (isError) {
+    redirect(`/dashboard/settings/security?error=${encodeURIComponent(message)}`);
+  } else {
+    redirect(`/dashboard/settings/security?message=${encodeURIComponent(message)}`);
+  }
+}
+
+export async function disableTotp(): Promise<never> {
+  const account = await requireAccount();
+  let isError = false;
+  let message = "";
+
+  try {
+    await account.deleteMFAAuthenticator(AuthenticatorType.Totp);
+    message = "Two-Factor Authentication disabled";
+  } catch (error) {
+    isError = true;
+    message = error instanceof Error ? error.message : "Unable to disable 2FA";
+  }
+
+  if (isError) {
+    redirect(`/dashboard/settings/security?error=${encodeURIComponent(message)}`);
+  } else {
+    redirect(`/dashboard/settings/security?message=${encodeURIComponent(message)}`);
+  }
+}
+
+export async function generateRecoveryCodes() {
+  const account = await requireAccount();
+  try {
+    const codes = await account.createMFARecoveryCodes();
+    return { success: true, codes: codes.recoveryCodes };
+  } catch (error) {
+    return { success: false, message: error instanceof Error ? error.message : "Unable to generate recovery codes" };
   }
 }
