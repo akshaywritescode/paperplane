@@ -6,15 +6,30 @@ import Link from "next/link";
 const footerColumns = [
   {
     title: "Product",
-    links: ["Features", "Pricing", "Collections", "Changelog"],
+    links: [
+      { label: "Features",  href: "/#features"  },
+      { label: "Pricing",   href: "/#pricing"   },
+      { label: "Collections", href: "/dashboard/collections" },
+      { label: "Changelog", href: "/changelog"  },
+    ],
   },
   {
     title: "Resources",
-    links: ["Documentation", "Tutorials", "Blog", "Support"],
+    links: [
+      { label: "Documentation", href: "/docs"      },
+      { label: "Tutorials",     href: "/tutorials" },
+      { label: "Blog",          href: "/blog"      },
+      { label: "Support",       href: "/contact"   },
+    ],
   },
   {
     title: "Company",
-    links: ["About", "Careers", "Contact", "Partners"],
+    links: [
+      { label: "About",    href: "/about"    },
+      { label: "Careers",  href: "/careers"  },
+      { label: "Contact",  href: "/contact"  },
+      { label: "Partners", href: "/partners" },
+    ],
   },
 ];
 
@@ -45,7 +60,7 @@ export default function Footer() {
               Build requests, test responses, and organize collections in one
               focused workspace.
             </p>
-            <Button className="mt-9 h-11 rounded-xl bg-white px-6 text-slate-950 hover:bg-white/90">
+            <Button className="mt-9 h-11 rounded-xl bg-white px-6 text-slate-950 hover:bg-white/90" render={<Link href="/signup" />}>
               Start for free
             </Button>
           </div>
@@ -95,12 +110,12 @@ export default function Footer() {
                     </h3>
                     <ul className="mt-5 space-y-3">
                       {column.links.map((link) => (
-                        <li key={link}>
+                        <li key={link.label}>
                           <Link
-                            href="/"
+                            href={link.href}
                             className="text-sm text-slate-600 transition-colors hover:text-slate-950"
                           >
-                            {link}
+                            {link.label}
                           </Link>
                         </li>
                       ))}
@@ -113,13 +128,13 @@ export default function Footer() {
             <div className="mt-10 flex flex-col gap-5 border-t border-slate-200 pt-7 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
               <p>© 2026 Paperplane. All rights reserved.</p>
               <div className="flex flex-wrap gap-x-6 gap-y-3">
-                <Link href="/" className="underline-offset-4 hover:underline">
+                <Link href="/privacy" className="underline-offset-4 hover:underline">
                   Privacy Policy
                 </Link>
-                <Link href="/" className="underline-offset-4 hover:underline">
+                <Link href="/terms" className="underline-offset-4 hover:underline">
                   Terms of Service
                 </Link>
-                <Link href="/" className="underline-offset-4 hover:underline">
+                <Link href="/cookies" className="underline-offset-4 hover:underline">
                   Cookies Settings
                 </Link>
               </div>

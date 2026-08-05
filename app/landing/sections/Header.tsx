@@ -5,17 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 const navItems = [
   { href: "/", label: "Home" },
-  { href: "/about", label: "About" },
-  { href: "/features", label: "Features" },
-  { href: "/pricing", label: "Pricing" },
+  { href: "/#features", label: "Features" },
+  { href: "/#pricing", label: "Pricing" },
+  { href: "/contact", label: "Contact" },
 ];
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+
+  function isActive(href: string) {
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href.replace(/#.*$/, "")) && href.startsWith(pathname);
+  }
 
   return (
     <header className="absolute inset-x-0 top-0 z-20 w-full py-5 px-4 flex justify-center">
@@ -44,7 +51,7 @@ export default function Header() {
                 <Link
                   href={item.href}
                   className={`rounded-lg p-2 transition-colors duration-150 hover:bg-black/5 ${
-                    item.href === "/" ? "bg-black/5" : ""
+                    isActive(item.href) ? "bg-black/5" : ""
                   }`}
                 >
                   {item.label}
@@ -54,15 +61,18 @@ export default function Header() {
           </ul>
 
           <div className="hidden gap-3 md:flex">
-            <Button className="bg-orange-600 hover:bg-orange-700 transition-colors duration-150">
-              LogIn
-            </Button>
-            <Button
-              variant="outline"
-              className="transition-colors duration-150"
+            <Link
+              href="/signup"
+              className="inline-flex h-8 items-center justify-center rounded-lg bg-orange-600 px-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-orange-700"
             >
-              Join us
-            </Button>
+              Sign up
+            </Link>
+            <Link
+              href="/login"
+              className="inline-flex h-8 items-center justify-center rounded-lg border border-border bg-background px-2.5 text-sm font-medium transition-colors duration-150 hover:bg-muted"
+            >
+              Log in
+            </Link>
           </div>
 
           <Button
@@ -86,7 +96,7 @@ export default function Header() {
                   <Link
                     href={item.href}
                     className={`block rounded-lg px-3 py-2.5 transition-colors duration-150 hover:bg-black/5 ${
-                      item.href === "/" ? "bg-black/5" : ""
+                      isActive(item.href) ? "bg-black/5" : ""
                     }`}
                     onClick={() => setIsOpen(false)}
                   >
@@ -97,12 +107,20 @@ export default function Header() {
             </ul>
 
             <div className="mt-3 grid grid-cols-1 gap-2 border-t border-slate-100 pt-3 min-[420px]:grid-cols-2">
-              <Button className="h-10 bg-orange-600 hover:bg-orange-700">
-                Get full access
-              </Button>
-              <Button variant="outline" className="h-10">
-                Join us
-              </Button>
+              <Link
+                href="/signup"
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-orange-600 px-3 text-sm font-medium text-white hover:bg-orange-700"
+                onClick={() => setIsOpen(false)}
+              >
+                Sign up
+              </Link>
+              <Link
+                href="/login"
+                className="inline-flex h-10 items-center justify-center rounded-lg border border-border bg-background px-3 text-sm font-medium hover:bg-muted"
+                onClick={() => setIsOpen(false)}
+              >
+                Log in
+              </Link>
             </div>
           </div>
         ) : null}

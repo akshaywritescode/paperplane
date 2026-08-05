@@ -82,7 +82,7 @@ export default function FAQ() {
           <p className="mt-4 max-w-2xl text-pretty text-sm leading-7 text-slate-600 sm:text-base">
             These are the most common questions about Paperplane. Can&apos;t
             find what you&apos;re looking for?{" "}
-            <Link href="/" className="font-medium underline">
+            <Link href="/contact" className="font-medium underline">
               Chat to our friendly team!
             </Link>
           </p>

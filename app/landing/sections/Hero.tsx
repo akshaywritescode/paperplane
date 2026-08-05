@@ -2,6 +2,7 @@ import { griffy } from "@/app/font";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Hero() {
   return (
@@ -50,6 +51,7 @@ export default function Hero() {
           <Button
             size="lg"
             className="h-11 gap-2 rounded-xl bg-orange-600 px-5 text-white shadow-[0_14px_34px_rgba(234,88,12,0.28)] hover:bg-orange-700"
+            render={<Link href="/signup" />}
           >
             Start testing
             <ArrowRight className="size-4" />
@@ -58,6 +60,7 @@ export default function Hero() {
             size="lg"
             variant="outline"
             className="h-11 gap-2 rounded-xl border-white/80 bg-white/80 px-5 text-slate-900 shadow-[0_14px_34px_rgba(15,23,42,0.12)] backdrop-blur-md hover:bg-white"
+            render={<Link href="/#demo" />}
           >
             <Play className="size-4" />
             Watch demo

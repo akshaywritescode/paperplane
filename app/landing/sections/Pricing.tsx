@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Check, CircleCheck, Info, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 const packs = [
   {
@@ -110,7 +111,10 @@ export default function Pricing() {
             <p className="pb-2 text-sm text-slate-500">/month</p>
           </div>
 
-          <Button className="mt-6 h-12 w-full rounded-xl bg-slate-950 text-white shadow-[0_16px_30px_rgba(15,23,42,0.18)] hover:bg-slate-800">
+          <Button
+            className="mt-6 h-12 w-full rounded-xl bg-slate-950 text-white shadow-[0_16px_30px_rgba(15,23,42,0.18)] hover:bg-slate-800"
+            render={<Link href="/signup" />}
+          >
             Start for Free
           </Button>
 
