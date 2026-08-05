@@ -243,10 +243,10 @@ export function RequestPane({
   // ⌥R (Mac) / Ctrl+R (other) → Send to Repeater
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
-      const isMac = navigator.platform.toUpperCase().includes("MAC");
+      const isMac = /mac/i.test(navigator.userAgent) && !/windows/i.test(navigator.userAgent);
       const triggered = isMac
-        ? e.altKey && e.key === "r"
-        : e.ctrlKey && e.key === "r";
+        ? e.altKey && e.key.toLowerCase() === "r"
+        : e.ctrlKey && e.key.toLowerCase() === "r";
       if (triggered) {
         e.preventDefault();
         onSendToRepeater();
@@ -256,7 +256,7 @@ export function RequestPane({
     return () => window.removeEventListener("keydown", handleKey);
   }, [onSendToRepeater]);
 
-  const isMac = typeof navigator !== "undefined" && navigator.platform.toUpperCase().includes("MAC");
+  const isMac = typeof navigator !== "undefined" && /mac/i.test(navigator.userAgent) && !/windows/i.test(navigator.userAgent);
   const shortcutLabel = isMac ? "⌥R" : "Ctrl+R";
 
   return (
@@ -338,7 +338,7 @@ export function RequestPane({
     </ContextMenuTrigger>
 
       <ContextMenuContent>
-        <ContextMenuItem onSelect={onSendToRepeater}>
+        <ContextMenuItem onClick={onSendToRepeater}>
           <RotateCw className="size-3" />
           Send to Repeater
           <ContextMenuShortcut>{shortcutLabel}</ContextMenuShortcut>
