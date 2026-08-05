@@ -279,6 +279,16 @@ export function RepeaterEditor() {
               onParamsChange={(params) => setTabState(activeTab.id, { params })}
               onHeadersChange={(headers) => setTabState(activeTab.id, { headers })}
               onBodyChange={(body) => setTabState(activeTab.id, { body })}
+              onSendToRepeater={() => {
+                addTab({
+                  name: activeTab.name || activeTab.url || "untitled",
+                  method: activeTab.method,
+                  url: activeTab.url,
+                  params: state.params,
+                  headers: state.headers,
+                  body: state.body,
+                });
+              }}
             />
             <div className="w-px bg-border shrink-0" />
             <ResponsePane

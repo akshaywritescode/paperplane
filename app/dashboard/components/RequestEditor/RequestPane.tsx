@@ -1,8 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Plus, Trash2, RotateCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import type { HttpMethod, ParamRow, HeaderRow } from "./index";
 
 type Props = {
@@ -14,6 +22,7 @@ type Props = {
   onParamsChange: (rows: ParamRow[]) => void;
   onHeadersChange: (rows: HeaderRow[]) => void;
   onBodyChange: (body: string) => void;
+  onSendToRepeater: () => void;
 };
 
 type Tab = "raw" | "params" | "headers" | "auth" | "body";
@@ -227,11 +236,32 @@ export function RequestPane({
   onParamsChange,
   onHeadersChange,
   onBodyChange,
+  onSendToRepeater,
 }: Props) {
   const [tab, setTab] = useState<Tab>("raw");
 
+  // ⌥R (Mac) / Ctrl+R (other) → Send to Repeater
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      const isMac = navigator.platform.toUpperCase().includes("MAC");
+      const triggered = isMac
+        ? e.altKey && e.key === "r"
+        : e.ctrlKey && e.key === "r";
+      if (triggered) {
+        e.preventDefault();
+        onSendToRepeater();
+      }
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [onSendToRepeater]);
+
+  const isMac = typeof navigator !== "undefined" && navigator.platform.toUpperCase().includes("MAC");
+  const shortcutLabel = isMac ? "⌥R" : "Ctrl+R";
+
   return (
-    <div className="flex w-1/2 flex-col overflow-hidden">
+    <ContextMenu>
+      <ContextMenuTrigger className="flex w-1/2 flex-col overflow-hidden">
       {/* Tabs */}
       <div className="flex h-10 shrink-0 items-center border-b">
         {TABS.map((t) => (
@@ -305,6 +335,19 @@ export function RequestPane({
           />
         )}
       </div>
-    </div>
+    </ContextMenuTrigger>
+
+      <ContextMenuContent>
+        <ContextMenuItem onSelect={onSendToRepeater}>
+          <RotateCw className="size-4" />
+          Send to Repeater
+          <ContextMenuShortcut>{shortcutLabel}</ContextMenuShortcut>
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem disabled>
+          More actions coming soon
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }

@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { TabBar } from "./TabBar";
 import { UrlBar } from "./UrlBar";
 import { RequestPane } from "./RequestPane";
 import { ResponsePane } from "./ResponsePane";
+import { useRepeater } from "../../context/RepeaterContext";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
 
@@ -46,8 +48,22 @@ export function RequestEditor() {
   const [headers, setHeaders] = useState<HeaderRow[]>([]);
   const [body, setBody] = useState("");
   const [response, setResponse] = useState<ResponseState>({ status: "idle" });
+  const { addTab: addRepeaterTab } = useRepeater();
+  const router = useRouter();
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
+
+  function sendToRepeater() {
+    addRepeaterTab({
+      name: activeTab.name || activeTab.url || "untitled",
+      method: activeTab.method,
+      url: activeTab.url,
+      params,
+      headers,
+      body,
+    });
+    router.push("/dashboard/repeater");
+  }
 
   function addTab() {
     const id = crypto.randomUUID();
@@ -163,6 +179,7 @@ export function RequestEditor() {
           onParamsChange={setParams}
           onHeadersChange={setHeaders}
           onBodyChange={setBody}
+          onSendToRepeater={sendToRepeater}
         />
         <div className="w-px bg-border shrink-0" />
         <ResponsePane
