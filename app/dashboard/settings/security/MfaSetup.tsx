@@ -47,7 +47,7 @@ export function MfaSetup({ mfaEnabled }: { mfaEnabled: boolean }) {
 
         <div className="flex gap-3">
           <form action={disableTotp}>
-            <Button variant="destructive">Disable 2FA</Button>
+            <Button variant="destructive" type="submit">Disable 2FA</Button>
           </form>
           <Button variant="outline" onClick={handleGenerateCodes} disabled={isLoading}>
             <Key className="mr-2 size-4" />
