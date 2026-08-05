@@ -12,12 +12,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
 import { SettingsAlert } from "../components/SettingsAlert";
+import { AvatarUploadForm } from "./AvatarUploadForm";
 import {
   resendEmailVerification,
   updateProfileEmail,
   updateProfileName,
-  updateProfileAvatar,
-  deleteProfileAvatar,
 } from "../actions";
 import type { Metadata } from "next";
 import { CheckCircle2, Mail } from "lucide-react";
@@ -63,10 +62,10 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-6">
-            <img
-              src={avatarUrl}
-              alt={user.name || "User avatar"}
-              className="size-16 rounded-xl bg-orange-100 object-cover"
+            <AvatarUploadForm 
+              avatarUrl={avatarUrl} 
+              userName={user.name || "User"} 
+              hasCustomAvatar={!!user.prefs?.avatarId} 
             />
             <div className="flex-1">
               <p className="text-sm font-medium text-foreground">
@@ -85,29 +84,6 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
                 </span>
               )}
             </div>
-          </div>
-          
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <form action={updateProfileAvatar} className="flex flex-1 items-center gap-2">
-              <Input
-                id="avatar"
-                name="avatar"
-                type="file"
-                accept="image/*"
-                className="max-w-[250px]"
-                required
-              />
-              <Button type="submit" variant="outline" size="sm">
-                Upload
-              </Button>
-            </form>
-            {user.prefs?.avatarId && (
-              <form action={deleteProfileAvatar}>
-                <Button type="submit" variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50">
-                  Remove Picture
-                </Button>
-              </form>
-            )}
           </div>
           
           {!user.emailVerification && (
