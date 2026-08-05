@@ -83,7 +83,13 @@ export function ResponsePane({ response, onClear }: { response: ResponseState; o
                 <MoreVertical className="size-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent side="bottom" align="end" sideOffset={4} className="w-52">
-                <DropdownMenuItem className="flex items-center justify-between text-xs">
+                <DropdownMenuItem className="flex items-center justify-between text-xs" onClick={() => {
+                  if (response.status !== "done") return;
+                  const headers = Object.entries(response.headers)
+                    .map(([k, v]) => `${k}: ${v}`)
+                    .join("\n");
+                  navigator.clipboard.writeText(`${headers}\n\n${response.body}`);
+                }}>
                   Copy All <Copy className="size-3.5 text-muted-foreground" />
                 </DropdownMenuItem>
                 <DropdownMenuItem className="flex items-center justify-between text-xs" onClick={() => {
