@@ -301,7 +301,12 @@ export async function disableTotp(): Promise<never> {
   let message = "";
 
   try {
-    await account.deleteMFAAuthenticator(AuthenticatorType.Totp);
+    try {
+      await account.deleteMFAAuthenticator(AuthenticatorType.Totp);
+    } catch (e) {
+      // It might already be deleted
+    }
+    await account.updateMFA(false);
     message = "Two-Factor Authentication disabled";
   } catch (error) {
     isError = true;
