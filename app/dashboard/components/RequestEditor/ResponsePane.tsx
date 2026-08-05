@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Loader2, AlertCircle, MoreVertical } from "lucide-react";
+import { FileText, Loader2, AlertCircle, MoreVertical, Copy, ListFilter, Download, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CodeBlock } from "./CodeBlock";
 import { SearchBar, HighlightedText } from "./SearchBar";
@@ -82,15 +82,23 @@ export function ResponsePane({ response }: { response: ResponseState }) {
               <DropdownMenuTrigger className="ml-1 flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground outline-none">
                 <MoreVertical className="size-4" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent side="bottom" align="end" sideOffset={4}>
-                <DropdownMenuItem>Copy All</DropdownMenuItem>
-                <DropdownMenuItem>Copy Headers</DropdownMenuItem>
-                <DropdownMenuItem>Copy Body</DropdownMenuItem>
+              <DropdownMenuContent side="bottom" align="end" sideOffset={4} className="w-52">
+                <DropdownMenuItem className="flex items-center justify-between text-xs">
+                  Copy All <Copy className="size-3.5 text-muted-foreground" />
+                </DropdownMenuItem>
+                <DropdownMenuItem className="flex items-center justify-between text-xs">
+                  Copy Headers <ListFilter className="size-3.5 text-muted-foreground" />
+                </DropdownMenuItem>
+                <DropdownMenuItem className="flex items-center justify-between text-xs">
+                  Copy Body <FileText className="size-3.5 text-muted-foreground" />
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Download Response</DropdownMenuItem>
+                <DropdownMenuItem className="flex items-center justify-between text-xs">
+                  Download Response <Download className="size-3.5 text-muted-foreground" />
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive">
-                  Clear Response
+                <DropdownMenuItem className="flex items-center justify-between text-xs text-destructive">
+                  Clear Response <Trash2 className="size-3.5" />
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
