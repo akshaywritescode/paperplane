@@ -29,10 +29,50 @@ function formatSize(bytes: number) {
   return `${(bytes / 1024).toFixed(1)} KB`;
 }
 
-export function ResponsePane({ response, onClear }: { response: ResponseState; onClear: () => void }) {
+export function ResponsePane({ response, onClear, url = "" }: { response: ResponseState; onClear: () => void; url?: string }) {
   const [tab, setTab] = useState<Tab>("response");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCurrent, setSearchCurrent] = useState(0);
+
+  function downloadResponse() {
+    if (response.status !== "done") return;
+
+    // Detect extension from content-type header
+    const ct = response.headers["content-type"] ?? "";
+    let ext = "txt";
+    if (ct.includes("json")) ext = "json";
+    else if (ct.includes("html")) ext = "html";
+    else if (ct.includes("xml")) ext = "xml";
+    else if (ct.includes("csv")) ext = "csv";
+    else if (ct.includes("javascript")) ext = "js";
+    else if (ct.includes("css")) ext = "css";
+    else if (ct.includes("plain")) ext = "txt";
+
+    // Build filename: [datetime]-[subdomain-domain-tld-path].ext
+    const now = new Date();
+    const datetime = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}${String(now.getSeconds()).padStart(2, "0")}`;
+
+    let urlPart = "response";
+    try {
+      const fullUrl = url.startsWith("http") ? url : `https://${url}`;
+      const parsed = new URL(fullUrl);
+      // host: subdomain.domain.tld → replace dots with hyphens
+      const hostPart = parsed.hostname.replace(/\./g, "-");
+      // path: /foo/bar → foo-bar (strip leading slash, replace / with -)
+      const pathPart = parsed.pathname.replace(/^\//, "").replace(/\//g, "-") || "";
+      urlPart = pathPart ? `${hostPart}-${pathPart}` : hostPart;
+    } catch { /* keep default */ }
+
+    const filename = `${datetime}-${urlPart}.${ext}`;
+
+    const blob = new Blob([response.body], { type: ct || "text/plain" });
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(href);
+  }
 
   function getSearchContent(): string {
     if (response.status !== "done") return "";
@@ -108,7 +148,7 @@ export function ResponsePane({ response, onClear }: { response: ResponseState; o
                   Copy Body <FileText className="size-3.5 text-muted-foreground" />
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="flex items-center justify-between text-xs">
+                <DropdownMenuItem className="flex items-center justify-between text-xs" onClick={downloadResponse}>
                   Download Response <Download className="size-3.5 text-muted-foreground" />
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

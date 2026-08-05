@@ -182,7 +182,7 @@ export function RequestEditor() {
           onSendToRepeater={sendToRepeater}
         />
         <div className="w-px bg-border shrink-0" />
-        <ResponsePane response={response} onClear={() => setResponse({ status: "idle" })} />
+        <ResponsePane response={response} onClear={() => setResponse({ status: "idle" })} url={activeTab.url} />
       </div>
     </div>
   );

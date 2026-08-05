@@ -280,6 +280,7 @@ export function RepeaterEditor() {
             <ResponsePane
               response={state.response}
               onClear={() => setTabState(activeTab.id, { response: { status: "idle" } })}
+              url={activeTab.url}
             />
           </div>
         </>
