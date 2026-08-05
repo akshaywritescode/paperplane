@@ -5,12 +5,12 @@ import { getSingletonHighlighter } from "shiki";
 
 type Props = {
   code: string;
-  lang?: "json" | "html" | "xml" | "text";
+  lang?: "json" | "html" | "xml" | "text" | "css" | "javascript";
   searchQuery?: string;
   searchCurrent?: number;
 };
 
-function detectLang(code: string): "json" | "html" | "xml" | "text" {
+function detectLang(code: string): "json" | "html" | "xml" | "text" | "css" | "javascript" {
   const trimmed = code.trimStart();
   if (trimmed.startsWith("{") || trimmed.startsWith("[")) return "json";
   if (trimmed.startsWith("<!DOCTYPE") || trimmed.startsWith("<html")) return "html";
@@ -71,7 +71,7 @@ export function CodeBlock({ code, lang, searchQuery = "", searchCurrent = 0 }: P
 
     getSingletonHighlighter({
       themes: ["tokyo-night", "one-light"],
-      langs: ["json", "html", "xml"],
+      langs: ["json", "html", "xml", "css", "javascript"],
     }).then((highlighter) => {
       const raw = highlighter.codeToHtml(displayCode, {
         lang: resolvedLang === "text" ? "text" : resolvedLang,
