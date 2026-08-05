@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Loader2, AlertCircle, MoreVertical, Copy, ListFilter, Download, Trash2 } from "lucide-react";
+import { FileText, Loader2, AlertCircle, MoreVertical, Copy, ListFilter, Download, Trash2, ChevronsUpDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CodeBlock } from "./CodeBlock";
 import { SearchBar, HighlightedText } from "./SearchBar";
@@ -13,6 +13,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ResponseState } from "./index";
+
+type Lang = "auto" | "json" | "html" | "xml" | "text";
+
+const LANGS: { value: Lang; label: string }[] = [
+  { value: "auto",  label: "Auto"  },
+  { value: "json",  label: "JSON"  },
+  { value: "html",  label: "HTML"  },
+  { value: "xml",   label: "XML"   },
+  { value: "text",  label: "Text"  },
+];
 
 type Tab = "response" | "headers";
 
@@ -31,6 +41,7 @@ function formatSize(bytes: number) {
 
 export function ResponsePane({ response, onClear, url = "" }: { response: ResponseState; onClear: () => void; url?: string }) {
   const [tab, setTab] = useState<Tab>("response");
+  const [lang, setLang] = useState<Lang>("auto");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCurrent, setSearchCurrent] = useState(0);
 
@@ -117,6 +128,28 @@ export function ResponsePane({ response, onClear, url = "" }: { response: Respon
               </button>
             ))}
 
+            {/* Language selector — only relevant on response tab */}
+            {tab === "response" && (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="ml-2 flex items-center gap-1 rounded-md border border-border bg-muted/50 px-2 py-1 text-xs font-medium text-foreground transition hover:bg-muted outline-none">
+                  {LANGS.find((l) => l.value === lang)?.label ?? "Auto"}
+                  <ChevronsUpDown className="size-3 text-muted-foreground" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="bottom" align="end" sideOffset={4} className="w-32">
+                  {LANGS.map((l) => (
+                    <DropdownMenuItem
+                      key={l.value}
+                      onClick={() => setLang(l.value)}
+                      className="flex items-center justify-between text-xs"
+                    >
+                      {l.label}
+                      {lang === l.value && <Check className="size-3.5 text-orange-500" />}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
             {/* More options */}
             <DropdownMenu>
               <DropdownMenuTrigger className="ml-1 flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground outline-none">
@@ -194,6 +227,7 @@ export function ResponsePane({ response, onClear, url = "" }: { response: Respon
         {response.status === "done" && tab === "response" && (
           <CodeBlock
             code={response.body}
+            lang={lang === "auto" ? undefined : lang}
             searchQuery={searchQuery}
             searchCurrent={searchCurrent}
           />
