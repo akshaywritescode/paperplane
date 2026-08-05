@@ -26,23 +26,30 @@ async function requireAccount() {
   return appwrite.account;
 }
 
-export async function updateProfileName(formData: FormData): Promise<ActionResult> {
+export async function updateProfileName(formData: FormData): Promise<never> {
   const name = getFormValue(formData, "name");
 
   if (!name) {
-    return { success: false, message: "Name is required" };
+    redirect("/dashboard/settings/profile?error=Name%20is%20required");
   }
 
   const account = await requireAccount();
 
+  let isError = false;
+  let message = "";
+
   try {
     await account.updateName({ name });
-    return { success: true, message: "Name updated successfully" };
+    message = "Name updated successfully";
   } catch (error) {
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : "Unable to update name",
-    };
+    isError = true;
+    message = error instanceof Error ? error.message : "Unable to update name";
+  }
+
+  if (isError) {
+    redirect(`/dashboard/settings/profile?error=${encodeURIComponent(message)}`);
+  } else {
+    redirect(`/dashboard/settings/profile?message=${encodeURIComponent(message)}`);
   }
 }
 
@@ -74,18 +81,25 @@ export async function updateProfileEmail(formData: FormData): Promise<never> {
   }
 }
 
-export async function resendEmailVerification(): Promise<ActionResult> {
+export async function resendEmailVerification(): Promise<never> {
   const account = await requireAccount();
   const origin = await getOrigin();
 
+  let isError = false;
+  let message = "";
+
   try {
     await account.createEmailVerification({ url: `${origin}/auth/verify` });
-    return { success: true, message: "Verification email sent. Check your inbox." };
+    message = "Verification email sent. Check your inbox.";
   } catch (error) {
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : "Unable to send verification email",
-    };
+    isError = true;
+    message = error instanceof Error ? error.message : "Unable to send verification email";
+  }
+
+  if (isError) {
+    redirect(`/dashboard/settings/profile?error=${encodeURIComponent(message)}`);
+  } else {
+    redirect(`/dashboard/settings/profile?message=${encodeURIComponent(message)}`);
   }
 }
 
