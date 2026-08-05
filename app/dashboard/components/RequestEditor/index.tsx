@@ -111,30 +111,38 @@ export function RequestEditor() {
       reqHeaders[h.name] = h.value;
     });
 
-    const start = Date.now();
-
     try {
-      const res = await fetch(finalUrl, {
-        method: activeTab.method,
-        headers: reqHeaders,
-        body: ["POST", "PUT", "PATCH"].includes(activeTab.method)
-          ? body || undefined
-          : undefined,
+      const res = await fetch("/api/proxy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: finalUrl,
+          method: activeTab.method,
+          headers: reqHeaders,
+          body: ["POST", "PUT", "PATCH"].includes(activeTab.method)
+            ? body || undefined
+            : undefined,
+        }),
       });
 
-      const time = Date.now() - start;
-      const text = await res.text();
-      const resHeaders: Record<string, string> = {};
-      res.headers.forEach((v, k) => { resHeaders[k] = v; });
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setResponse({
+          status: "error",
+          message: data.error ?? "Request failed",
+        });
+        return;
+      }
 
       setResponse({
         status: "done",
-        statusCode: res.status,
-        statusText: res.statusText,
-        time,
-        size: new Blob([text]).size,
-        headers: resHeaders,
-        body: text,
+        statusCode: data.statusCode,
+        statusText: data.statusText,
+        time: data.time,
+        size: data.size,
+        headers: data.headers,
+        body: data.body,
       });
     } catch (err) {
       setResponse({
