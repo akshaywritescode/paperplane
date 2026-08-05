@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FileText, Loader2, AlertCircle, MoreVertical, Copy, ListFilter, Download, Trash2, ChevronsUpDown, Check } from "lucide-react";
+import { SiCss, SiHtml5, SiJavascript, SiJson, SiXml } from "@icons-pack/react-simple-icons";
 import { cn } from "@/lib/utils";
 import { CodeBlock } from "./CodeBlock";
 import { SearchBar, HighlightedText } from "./SearchBar";
@@ -18,41 +19,18 @@ type Lang = "auto" | "json" | "html" | "xml" | "text" | "css" | "javascript";
 
 const LANG_ICONS: Record<Lang, React.ReactNode> = {
   auto: (
-    <svg viewBox="0 0 16 16" className="size-3 shrink-0" fill="currentColor" aria-hidden="true">
+    <svg viewBox="0 0 16 16" className="size-3.5 shrink-0" fill="currentColor" aria-hidden="true">
       <path d="M8 1l1.2 3.8L13 5.2l-3 2.2 1 3.8L8 9.4l-3 1.8 1-3.8-3-2.2 3.8-.4z"/>
     </svg>
   ),
-  json: (
-    <svg viewBox="0 0 16 16" className="size-3 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 3C4 3 3 3.5 3 5v1.5C3 7.3 2.5 7.7 2 8c.5.3 1 .7 1 1.5V11c0 1.5 1 2 2 2M11 3c1 0 2 .5 2 2v1.5c0 .8.5 1.2 1 1.5-.5.3-1 .7-1 1.5V11c0 1.5-1 2-2 2"/>
-    </svg>
-  ),
-  html: (
-    <svg viewBox="0 0 16 16" className="size-3 shrink-0" fill="currentColor" aria-hidden="true">
-      <path d="M1.5 1l1.1 12L8 14.5l5.4-1.5L14.5 1zm2 2h9l-.3 3H5.8l.2 2h6.4l-.8 5L8 14l-3.6-1-.2-2.5H6l.1 1.4L8 12.4l1.9-.5.2-2.4H5.6z"/>
-    </svg>
-  ),
-  xml: (
-    <svg viewBox="0 0 16 16" className="size-3 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 5L2 8l3 3M11 5l3 3-3 3M9 4l-2 8"/>
-    </svg>
-  ),
+  json:       <SiJson       className="size-3.5 shrink-0" />,
+  html:       <SiHtml5      className="size-3.5 shrink-0" />,
+  xml:        <SiXml        className="size-3.5 shrink-0" />,
+  css:        <SiCss        className="size-3.5 shrink-0" />,
+  javascript: <SiJavascript className="size-3.5 shrink-0" />,
   text: (
-    <svg viewBox="0 0 16 16" className="size-3 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+    <svg viewBox="0 0 16 16" className="size-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
       <path d="M3 5h10M3 8h7M3 11h5"/>
-    </svg>
-  ),
-  css: (
-    // # selector symbol
-    <svg viewBox="0 0 16 16" className="size-3 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
-      <path d="M3 6h10M3 10h10M6 3v10M10 3v10"/>
-    </svg>
-  ),
-  javascript: (
-    // JS — semicolon + dot (minimalist)
-    <svg viewBox="0 0 16 16" className="size-3 shrink-0" fill="currentColor" aria-hidden="true">
-      <rect x="2" y="2" width="12" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M6 10.5a1.5 1.5 0 01-3 0V7h1.5v3.5a.5.5 0 001 0M9 7h3v1.5h-1.5V11a2 2 0 01-2 2v-1.5a.5.5 0 00.5-.5V8.5H9V7z"/>
     </svg>
   ),
 };
