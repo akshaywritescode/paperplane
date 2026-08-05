@@ -1,4 +1,4 @@
-import { createAppwriteSessionClient } from "@/lib/appwrite/server";
+import { createAppwriteSessionClient, getCurrentAppwriteUser } from "@/lib/appwrite/server";
 import { redirect } from "next/navigation";
 import { MfaForm } from "./MfaForm";
 import type { Metadata } from "next";
@@ -13,10 +13,16 @@ type MfaPageProps = {
 };
 
 export default async function MfaPage({ searchParams }: MfaPageProps) {
-  // Must have an active (pre-MFA) session to be here
+  // No session at all → send to login
   const appwrite = await createAppwriteSessionClient();
   if (!appwrite) {
     redirect("/login?error=Please%20log%20in%20first");
+  }
+
+  // Already fully authenticated → send to dashboard
+  const user = await getCurrentAppwriteUser();
+  if (user?.emailVerification) {
+    redirect("/dashboard");
   }
 
   const params = await searchParams;
