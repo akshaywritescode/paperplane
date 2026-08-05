@@ -1,10 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Loader2, AlertCircle } from "lucide-react";
+import { FileText, Loader2, AlertCircle, MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CodeBlock } from "./CodeBlock";
 import { SearchBar, HighlightedText } from "./SearchBar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { ResponseState } from "./index";
 
 type Tab = "response" | "headers";
@@ -54,7 +61,7 @@ export function ResponsePane({ response }: { response: ResponseState }) {
           <span className="text-xs text-muted-foreground">{response.time} ms</span>
           <span className="text-xs text-muted-foreground">{formatSize(response.size)}</span>
 
-          <div className="ml-auto flex">
+          <div className="ml-auto flex items-center">
             {(["response", "headers"] as Tab[]).map((t) => (
               <button
                 key={t}
@@ -69,6 +76,24 @@ export function ResponsePane({ response }: { response: ResponseState }) {
                 {t}
               </button>
             ))}
+
+            {/* More options */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="ml-1 flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground outline-none">
+                <MoreVertical className="size-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="bottom" align="end" sideOffset={4}>
+                <DropdownMenuItem>Copy All</DropdownMenuItem>
+                <DropdownMenuItem>Copy Headers</DropdownMenuItem>
+                <DropdownMenuItem>Copy Body</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Download Response</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive">
+                  Clear Response
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       )}
