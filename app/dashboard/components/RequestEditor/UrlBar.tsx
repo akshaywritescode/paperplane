@@ -42,11 +42,34 @@ function ColorizedUrl({ url }: { url: string }) {
     const fullUrl = hasProtocol ? url : `https://${url}`;
     const parsed = new URL(fullUrl);
 
-    const scheme   = hasProtocol ? parsed.protocol.replace(":", "") : "";
-    const sep      = hasProtocol ? "://" : "";
-    const host     = parsed.hostname + (parsed.port ? `:${parsed.port}` : "");
-    const path     = parsed.pathname !== "/" ? parsed.pathname : "/";
-    const query    = parsed.search;
+    const scheme = hasProtocol ? parsed.protocol.replace(":", "") : "";
+    const sep    = hasProtocol ? "://" : "";
+    const host   = parsed.hostname + (parsed.port ? `:${parsed.port}` : "");
+    const path   = parsed.pathname !== "/" ? parsed.pathname : "/";
+
+    // Parse query: key=value pairs with & separator in foreground
+    const queryParts: React.ReactNode[] = [];
+    if (parsed.search) {
+      const raw = parsed.search.slice(1);
+      queryParts.push(<span key="qmark" className="text-foreground">?</span>);
+      raw.split("&").forEach((pair, i) => {
+        if (i > 0) queryParts.push(<span key={`sep-${i}`} className="text-foreground">&amp;</span>);
+        const eqIdx = pair.indexOf("=");
+        if (eqIdx !== -1) {
+          const k = pair.slice(0, eqIdx);
+          const v = pair.slice(eqIdx + 1);
+          queryParts.push(
+            <span key={`pair-${i}`}>
+              <span className="text-amber-400">{k}</span>
+              <span className="text-foreground">=</span>
+              <span className="text-amber-300">{v}</span>
+            </span>
+          );
+        } else {
+          queryParts.push(<span key={`pair-${i}`} className="text-amber-400">{pair}</span>);
+        }
+      });
+    }
 
     return (
       <span className="font-mono text-sm pointer-events-none select-none">
@@ -54,11 +77,10 @@ function ColorizedUrl({ url }: { url: string }) {
         {sep    && <span className="text-slate-400">{sep}</span>}
         <span className="text-sky-400">{host}</span>
         {path  && <span className="text-foreground">{path}</span>}
-        {query && <span className="text-amber-400">{query}</span>}
+        {queryParts}
       </span>
     );
   } catch {
-    // Not a valid URL yet — show as plain foreground
     return (
       <span className="font-mono text-sm text-foreground pointer-events-none select-none">
         {url}
