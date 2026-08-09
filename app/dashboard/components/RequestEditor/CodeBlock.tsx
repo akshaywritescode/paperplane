@@ -39,10 +39,16 @@ function formatJson(code: string): string {
 
 function injectLineNumbers(html: string): string {
   let lineNum = 0;
-  return html.replace(/<span class="line">/g, () => {
+  // Split on opening line spans, wrap content in line-code span
+  return html.split('<span class="line">').map((part, i) => {
+    if (i === 0) return part; // content before first line
     lineNum++;
-    return `<span class="line"><span class="line-number">${lineNum}</span>`;
-  });
+    // Find the closing </span> for this line and wrap content
+    const closeIdx = part.lastIndexOf("</span>");
+    const content = closeIdx !== -1 ? part.slice(0, closeIdx) : part;
+    const rest = closeIdx !== -1 ? part.slice(closeIdx) : "";
+    return `<span class="line"><span class="line-number">${lineNum}</span><span class="line-code">${content}</span>${rest}`;
+  }).join("");
 }
 
 function useDarkMode() {
@@ -145,7 +151,7 @@ export function CodeBlock({ code, lang, searchQuery = "", searchCurrent = 0, wor
         .shiki-block .line {
           display: flex;
           padding: 0 1rem;
-          ${wordWrap ? "white-space: pre-wrap; word-break: break-all; align-items: flex-start;" : ""}
+          align-items: flex-start;
         }
         .shiki-block .line:hover { background: ${hoverBg}; }
         .shiki-block .line-number {
@@ -159,8 +165,10 @@ export function CodeBlock({ code, lang, searchQuery = "", searchCurrent = 0, wor
           user-select: none;
           font-variant-numeric: tabular-nums;
         }
-        .shiki-block .line > span:not(.line-number) {
-          ${wordWrap ? "white-space: pre-wrap; word-break: break-all; min-width: 0; flex: 1;" : ""}
+        .shiki-block .line-code {
+          flex: 1;
+          min-width: 0;
+          ${wordWrap ? "white-space: pre-wrap; word-break: break-all; overflow-wrap: anywhere;" : "white-space: pre;"}
         }
       `}</style>
       <div
