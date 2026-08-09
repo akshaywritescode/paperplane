@@ -226,24 +226,24 @@ export function MfaSetup({ mfaEnabled }: { mfaEnabled: boolean }) {
         </p>
 
         {/* QR + secret */}
-        <div className="flex gap-5 rounded-xl border bg-muted/20 p-5">
+        <div className="flex gap-5 rounded-xl border bg-muted/20 p-5 overflow-hidden">
           {/* QR */}
           <div className="flex size-36 shrink-0 items-center justify-center rounded-xl bg-white p-2 dark:bg-white">
             <QRCode value={setupData.uri} size={120} />
           </div>
 
           {/* Can't scan */}
-          <div className="flex flex-col justify-center gap-3">
+          <div className="flex min-w-0 flex-col justify-center gap-3">
             <p className="text-sm font-medium text-foreground">Can't scan QR code?</p>
             <p className="text-xs text-muted-foreground">Enter this secret instead:</p>
-            <div className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2 overflow-hidden">
-              <code className="flex-1 min-w-0 truncate font-mono text-xs text-foreground">
+            <div className="flex min-w-0 items-center gap-2 rounded-lg border bg-background px-3 py-2">
+              <code className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-foreground">
                 {showSecret ? setupData.secret : "••••••••••••••••"}
               </code>
               <button
                 type="button"
                 onClick={() => setShowSecret((v) => !v)}
-                className="text-muted-foreground hover:text-foreground transition"
+                className="shrink-0 text-muted-foreground hover:text-foreground transition"
               >
                 {showSecret ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
               </button>
