@@ -1,13 +1,6 @@
 import { getCurrentAppwriteUser } from "@/lib/appwrite/server";
 import { getAvatarUrl } from "@/lib/avatar";
 import { redirect } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -19,167 +12,157 @@ import {
   updateProfileName,
 } from "../actions";
 import type { Metadata } from "next";
-import { CheckCircle2, Mail } from "lucide-react";
+import { CheckCircle2, Mail, ArrowRight } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Profile",
-};
+export const metadata: Metadata = { title: "Profile" };
 
 type ProfilePageProps = {
-  searchParams?: Promise<{
-    error?: string;
-    message?: string;
-  }>;
+  searchParams?: Promise<{ error?: string; message?: string }>;
 };
 
 export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   const user = await getCurrentAppwriteUser();
-
-  if (!user) {
-    redirect("/login?error=Please%20log%20in%20first");
-  }
+  if (!user) redirect("/login?error=Please%20log%20in%20first");
 
   const params = await searchParams;
-  const avatarUrl = getAvatarUrl(user.email || user.name || "paperplane", user.prefs?.avatarId);
+  const avatarUrl = getAvatarUrl(
+    user.email || user.name || "paperplane",
+    user.prefs?.avatarId,
+  );
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-xl space-y-8 py-2">
+      {/* Page header */}
       <div>
-        <h2 className="text-lg font-semibold text-foreground">Profile</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Update your personal information and email address.
+        <h2 className="text-sm font-semibold text-foreground">Profile</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          Manage your personal information.
         </p>
       </div>
 
       <SettingsAlert error={params?.error} message={params?.message} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile picture</CardTitle>
-          <CardDescription>
-            Your avatar is generated from your email address or uploaded by you.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-6">
-            <AvatarUploadForm 
-              avatarUrl={avatarUrl} 
-              userName={user.name || "User"} 
-              hasCustomAvatar={!!user.prefs?.avatarId} 
-            />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-foreground">
-                {user.name || "User"}
-              </p>
-              <p className="text-sm text-muted-foreground">{user.email}</p>
-              {user.emailVerification ? (
-                <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
-                  <CheckCircle2 className="size-3" />
-                  Verified
-                </span>
-              ) : (
-                <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
-                  <Mail className="size-3" />
-                  Unverified
-                </span>
-              )}
-            </div>
+      {/* ── Identity card ── */}
+      <section className="rounded-xl border bg-card p-5">
+        <div className="flex items-center gap-4">
+          <AvatarUploadForm
+            avatarUrl={avatarUrl}
+            userName={user.name || "User"}
+            hasCustomAvatar={!!user.prefs?.avatarId}
+          />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-foreground">
+              {user.name || "User"}
+            </p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              {user.email}
+            </p>
+            {user.emailVerification ? (
+              <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                <CheckCircle2 className="size-2.5" />
+                Verified
+              </span>
+            ) : (
+              <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+                <Mail className="size-2.5" />
+                Unverified
+              </span>
+            )}
           </div>
-          
-          {!user.emailVerification && (
-            <form action={resendEmailVerification} className="mt-4 border-t pt-4">
-              <Button type="submit" variant="outline" size="sm">
-                Resend verification email
-              </Button>
-            </form>
-          )}
-        </CardContent>
-      </Card>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Display name</CardTitle>
-          <CardDescription>
-            This is how your name appears across Paperplane.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form action={updateProfileName} className="space-y-4">
-            <div className="space-y-1.5">
-              <label
-                htmlFor="name"
-                className="text-sm font-medium text-foreground"
-              >
-                Full name
-              </label>
-              <Input
-                id="name"
-                name="name"
-                defaultValue={user.name}
-                required
-                placeholder="Jane Smith"
-              />
-            </div>
-            <Button
+        {!user.emailVerification && (
+          <form action={resendEmailVerification} className="mt-4 border-t pt-4">
+            <button
               type="submit"
-              className="bg-orange-600 text-white hover:bg-orange-700"
+              className="text-xs font-medium text-orange-600 hover:text-orange-700 transition-colors"
             >
-              Save changes
-            </Button>
+              Resend verification email →
+            </button>
           </form>
-        </CardContent>
-      </Card>
+        )}
+      </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Email address</CardTitle>
-          <CardDescription>
-            Changing your email requires your current password and will reset
-            verification status.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form action={updateProfileEmail} className="space-y-4">
-            <div className="space-y-1.5">
-              <label
-                htmlFor="email"
-                className="text-sm font-medium text-foreground"
-              >
-                Email
-              </label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                defaultValue={user.email}
-                required
-                placeholder="jane@company.com"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label
-                htmlFor="email-password"
-                className="text-sm font-medium text-foreground"
-              >
-                Current password
-              </label>
-              <PasswordInput
-                id="email-password"
-                name="password"
-                required
-                placeholder="Enter your password"
-                className="border-input bg-transparent focus:border-orange-400 focus:ring-orange-400/20"
-              />
-            </div>
-            <Button
-              type="submit"
-              className="bg-orange-600 text-white hover:bg-orange-700"
-            >
-              Update email
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      {/* ── Display name ── */}
+      <section className="space-y-4">
+        <div className="border-b pb-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Display name
+          </h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            How your name appears across Paperplane.
+          </p>
+        </div>
+        <form action={updateProfileName} className="space-y-3">
+          <div className="space-y-1">
+            <label htmlFor="name" className="text-xs font-medium text-foreground">
+              Full name
+            </label>
+            <Input
+              id="name"
+              name="name"
+              defaultValue={user.name}
+              required
+              placeholder="Jane Smith"
+              className="h-8 text-sm"
+            />
+          </div>
+          <Button
+            type="submit"
+            size="sm"
+            className="h-8 bg-orange-600 px-4 text-xs font-semibold text-white hover:bg-orange-700"
+          >
+            Save
+          </Button>
+        </form>
+      </section>
+
+      {/* ── Email address ── */}
+      <section className="space-y-4">
+        <div className="border-b pb-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Email address
+          </h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Requires your current password. Resets verification status.
+          </p>
+        </div>
+        <form action={updateProfileEmail} className="space-y-3">
+          <div className="space-y-1">
+            <label htmlFor="email" className="text-xs font-medium text-foreground">
+              Email
+            </label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              defaultValue={user.email}
+              required
+              placeholder="jane@company.com"
+              className="h-8 text-sm"
+            />
+          </div>
+          <div className="space-y-1">
+            <label htmlFor="email-password" className="text-xs font-medium text-foreground">
+              Current password
+            </label>
+            <PasswordInput
+              id="email-password"
+              name="password"
+              required
+              placeholder="••••••••"
+              className="h-8 text-sm focus:border-orange-400 focus:ring-orange-400/20"
+            />
+          </div>
+          <Button
+            type="submit"
+            size="sm"
+            className="h-8 bg-orange-600 px-4 text-xs font-semibold text-white hover:bg-orange-700"
+          >
+            Update email
+          </Button>
+        </form>
+      </section>
     </div>
   );
 }
