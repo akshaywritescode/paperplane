@@ -31,7 +31,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   );
 
   return (
-    <div className="mx-auto max-w-xl space-y-8 py-2">
+    <div className="mx-auto max-w-xl space-y-12 py-2">
       {/* Page header */}
       <div>
         <h2 className="text-sm font-semibold text-foreground">Profile</h2>
@@ -83,8 +83,6 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
         )}
       </section>
 
-      <hr className="border-border" />
-
       {/* ── Display name ── */}
       <section className="space-y-4">
         <div className="border-b pb-2">
@@ -118,8 +116,6 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
           </Button>
         </form>
       </section>
-
-      <hr className="border-border" />
 
       {/* ── Email address ── */}
       <section className="space-y-4">

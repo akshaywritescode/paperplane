@@ -20,7 +20,7 @@ export default async function SecurityPage({ searchParams }: SecurityPageProps) 
   const params = await searchParams;
 
   return (
-    <div className="mx-auto max-w-xl space-y-8 py-2">
+    <div className="mx-auto max-w-xl space-y-12 py-2">
       {/* Page header */}
       <div>
         <h2 className="text-sm font-semibold text-foreground">Security</h2>
