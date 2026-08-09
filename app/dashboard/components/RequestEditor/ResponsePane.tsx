@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FileText, Loader2, AlertCircle, MoreVertical, Copy, ListFilter, Download, Trash2, ChevronsUpDown, Check } from "lucide-react";
+import { FileText, Loader2, AlertCircle, MoreVertical, Copy, ListFilter, Download, Trash2, ChevronsUpDown, Check, WrapText } from "lucide-react";
 import { SiCss, SiHtml5, SiJavascript, SiJson, SiXml } from "@icons-pack/react-simple-icons";
 import { cn } from "@/lib/utils";
 import { CodeBlock, detectLang } from "./CodeBlock";
@@ -57,6 +57,7 @@ function formatSize(bytes: number) {
 export function ResponsePane({ response, onClear, url = "" }: { response: ResponseState; onClear: () => void; url?: string }) {
   const [tab, setTab] = useState<Tab>("response");
   const [lang, setLang] = useState<Lang>("text");
+  const [wordWrap, setWordWrap] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCurrent, setSearchCurrent] = useState(0);
 
@@ -177,6 +178,23 @@ export function ResponsePane({ response, onClear, url = "" }: { response: Respon
               </DropdownMenu>
             )}
 
+            {/* Word wrap toggle — only on response tab */}
+            {tab === "response" && (
+              <button
+                onClick={() => setWordWrap((v) => !v)}
+                aria-label="Toggle word wrap"
+                title={wordWrap ? "Disable word wrap" : "Enable word wrap"}
+                className={cn(
+                  "ml-1 flex size-7 items-center justify-center rounded-md transition-colors",
+                  wordWrap
+                    ? "bg-orange-100 text-orange-600 dark:bg-orange-950/40"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                <WrapText className="size-4" />
+              </button>
+            )}
+
             {/* More options */}
             <DropdownMenu>
               <DropdownMenuTrigger className="ml-1 flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground outline-none">
@@ -257,6 +275,7 @@ export function ResponsePane({ response, onClear, url = "" }: { response: Respon
             lang={lang}
             searchQuery={searchQuery}
             searchCurrent={searchCurrent}
+            wordWrap={wordWrap}
           />
         )}
 

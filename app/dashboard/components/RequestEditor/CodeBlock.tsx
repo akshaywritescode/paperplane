@@ -8,6 +8,7 @@ type Props = {
   lang?: "json" | "html" | "xml" | "text" | "css" | "javascript";
   searchQuery?: string;
   searchCurrent?: number;
+  wordWrap?: boolean;
 };
 
 export function detectLang(code: string, contentType?: string): "json" | "html" | "xml" | "text" | "css" | "javascript" {
@@ -65,7 +66,7 @@ function useDarkMode() {
   return dark;
 }
 
-export function CodeBlock({ code, lang, searchQuery = "", searchCurrent = 0 }: Props) {
+export function CodeBlock({ code, lang, searchQuery = "", searchCurrent = 0, wordWrap = false }: Props) {
   const dark = useDarkMode();
   const [html, setHtml] = useState<string>("");
   const resolvedLang = lang ?? detectLang(code);
@@ -113,7 +114,7 @@ export function CodeBlock({ code, lang, searchQuery = "", searchCurrent = 0 }: P
     const lines = displayCode.split("\n");
     return (
       <div className="flex-1 overflow-auto bg-background p-4">
-        <pre className="font-mono text-xs leading-relaxed" style={{ color: textColor }}>
+        <pre className={`font-mono text-xs leading-relaxed ${wordWrap ? "whitespace-pre-wrap break-all" : ""}`} style={{ color: textColor }}>
           {lines.map((line, i) => (
             <div key={i} className="flex">
               <span
@@ -144,6 +145,7 @@ export function CodeBlock({ code, lang, searchQuery = "", searchCurrent = 0 }: P
         .shiki-block .line {
           display: flex;
           padding: 0 1rem;
+          ${wordWrap ? "flex-wrap: wrap; white-space: pre-wrap; word-break: break-all;" : ""}
         }
         .shiki-block .line:hover { background: ${hoverBg}; }
         .shiki-block .line-number {
@@ -154,6 +156,7 @@ export function CodeBlock({ code, lang, searchQuery = "", searchCurrent = 0 }: P
           color: ${lineNumColor};
           user-select: none;
           font-variant-numeric: tabular-nums;
+          flex-shrink: 0;
         }
       `}</style>
       <div
