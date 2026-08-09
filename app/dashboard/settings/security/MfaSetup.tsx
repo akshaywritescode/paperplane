@@ -76,14 +76,8 @@ export function MfaSetup({ mfaEnabled }: { mfaEnabled: boolean }) {
     if (code.length !== 6) return;
     const fd = new FormData();
     fd.set("code", code);
-    startTransition(async () => {
-      try {
-        await verifyTotp(fd);
-        // redirect fires on success — if we reach here something went wrong
-      } catch {
-        // redirect throws — expected on success
-        toast.success("2FA enabled successfully!");
-      }
+    startTransition(() => {
+      verifyTotp(fd);
     });
   }
 
@@ -269,7 +263,12 @@ export function MfaSetup({ mfaEnabled }: { mfaEnabled: boolean }) {
             maxLength={6}
             value={otpValue}
             onChange={setOtpValue}
-            onComplete={handleVerify}
+            onComplete={(code) => {
+              setOtpValue(code);
+              // Auto-submit via the hidden form
+              const form = document.getElementById("mfa-verify-form") as HTMLFormElement;
+              if (form) form.requestSubmit();
+            }}
             disabled={isPending}
           >
             <InputOTPGroup className="gap-2">
@@ -283,9 +282,15 @@ export function MfaSetup({ mfaEnabled }: { mfaEnabled: boolean }) {
             </InputOTPGroup>
           </InputOTP>
 
+          {/* Hidden form that does the actual server action */}
+          <form id="mfa-verify-form" action={verifyTotp} className="hidden">
+            <input type="hidden" name="code" value={otpValue} />
+          </form>
+
           {/* Actions */}
           <div className="flex gap-3">
             <Button
+              type="button"
               variant="outline"
               onClick={() => { setStep("idle"); setSetupData(null); setOtpValue(""); }}
               disabled={isPending}
@@ -293,7 +298,11 @@ export function MfaSetup({ mfaEnabled }: { mfaEnabled: boolean }) {
               Cancel
             </Button>
             <Button
-              onClick={() => handleVerify(otpValue)}
+              type="button"
+              onClick={() => {
+                const form = document.getElementById("mfa-verify-form") as HTMLFormElement;
+                if (form) form.requestSubmit();
+              }}
               disabled={otpValue.length !== 6 || isPending}
               className="bg-orange-600 text-white hover:bg-orange-700 gap-2"
             >
