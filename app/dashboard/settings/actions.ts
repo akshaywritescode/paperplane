@@ -335,3 +335,18 @@ export async function generateRecoveryCodes() {
     return { success: false, message: error instanceof Error ? error.message : "Unable to generate recovery codes" };
   }
 }
+
+export async function revokeSession(sessionId: string): Promise<ActionResult> {
+  const appwrite = await createAppwriteSessionClient();
+  if (!appwrite) return { success: false, message: "Not authenticated" };
+
+  try {
+    await appwrite.account.deleteSession({ sessionId });
+    return { success: true, message: "Session revoked" };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Unable to revoke session",
+    };
+  }
+}

@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Shield, User } from "lucide-react";
+import { Lock, Shield, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/dashboard/settings/profile", label: "Profile", icon: User },
-  { href: "/dashboard/settings/security", label: "Security", icon: Shield },
+  { href: "/dashboard/settings/profile",  label: "Profile",  icon: User   },
+  { href: "/dashboard/settings/security", label: "Security", icon: Shield  },
+  { href: "/dashboard/settings/privacy",  label: "Privacy",  icon: Lock   },
 ];
 
 export function SettingsNav() {
