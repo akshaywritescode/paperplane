@@ -323,8 +323,14 @@ export async function disableTotp(): Promise<never> {
 export async function generateRecoveryCodes() {
   const account = await requireAccount();
   try {
-    const codes = await account.createMFARecoveryCodes();
-    return { success: true, codes: codes.recoveryCodes };
+    // Try creating first; if codes already exist Appwrite throws — then regenerate
+    let result;
+    try {
+      result = await account.createMFARecoveryCodes();
+    } catch {
+      result = await account.updateMFARecoveryCodes();
+    }
+    return { success: true, codes: result.recoveryCodes };
   } catch (error) {
     return { success: false, message: error instanceof Error ? error.message : "Unable to generate recovery codes" };
   }

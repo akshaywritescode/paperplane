@@ -55,6 +55,7 @@ export function MfaSetup({ mfaEnabled }: { mfaEnabled: boolean }) {
   const [setupData, setSetupData] = useState<{ uri: string; secret: string } | null>(null);
   const [otpValue, setOtpValue] = useState("");
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+  const [hasGeneratedCodes, setHasGeneratedCodes] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -87,6 +88,7 @@ export function MfaSetup({ mfaEnabled }: { mfaEnabled: boolean }) {
       const res = await generateRecoveryCodes();
       if (res.success && res.codes) {
         setRecoveryCodes(res.codes);
+        setHasGeneratedCodes(true);
         setStep("recovery");
       } else {
         toast.error(res.message ?? "Unable to generate recovery codes");
@@ -132,7 +134,7 @@ export function MfaSetup({ mfaEnabled }: { mfaEnabled: boolean }) {
             className="gap-2"
           >
             {isPending ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-            Regenerate recovery codes
+            {hasGeneratedCodes ? "Regenerate recovery codes" : "Generate recovery codes"}
           </Button>
 
           <form action={disableTotp}>
