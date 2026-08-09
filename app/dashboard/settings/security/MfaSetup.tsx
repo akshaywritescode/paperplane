@@ -236,8 +236,8 @@ export function MfaSetup({ mfaEnabled }: { mfaEnabled: boolean }) {
           <div className="flex flex-col justify-center gap-3">
             <p className="text-sm font-medium text-foreground">Can't scan QR code?</p>
             <p className="text-xs text-muted-foreground">Enter this secret instead:</p>
-            <div className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2">
-              <code className="flex-1 font-mono text-xs text-foreground">
+            <div className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2 overflow-hidden">
+              <code className="flex-1 min-w-0 truncate font-mono text-xs text-foreground">
                 {showSecret ? setupData.secret : "••••••••••••••••"}
               </code>
               <button
