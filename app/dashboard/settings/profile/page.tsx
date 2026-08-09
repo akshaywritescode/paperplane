@@ -83,6 +83,8 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
         )}
       </section>
 
+      <hr className="border-border" />
+
       {/* ── Display name ── */}
       <section className="space-y-4">
         <div className="border-b pb-2">
@@ -116,6 +118,8 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
           </Button>
         </form>
       </section>
+
+      <hr className="border-border" />
 
       {/* ── Email address ── */}
       <section className="space-y-4">

@@ -88,6 +88,8 @@ export default async function SecurityPage({ searchParams }: SecurityPageProps) 
         </form>
       </section>
 
+      <hr className="border-border" />
+
       {/* ── Two-factor authentication ── */}
       <section className="space-y-4">
         <div className="border-b pb-2">
