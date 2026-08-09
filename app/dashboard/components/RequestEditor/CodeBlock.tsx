@@ -145,18 +145,22 @@ export function CodeBlock({ code, lang, searchQuery = "", searchCurrent = 0, wor
         .shiki-block .line {
           display: flex;
           padding: 0 1rem;
-          ${wordWrap ? "flex-wrap: wrap; white-space: pre-wrap; word-break: break-all;" : ""}
+          ${wordWrap ? "white-space: pre-wrap; word-break: break-all; align-items: flex-start;" : ""}
         }
         .shiki-block .line:hover { background: ${hoverBg}; }
         .shiki-block .line-number {
           display: inline-block;
-          width: 2.5rem;
+          min-width: 3rem;
+          flex-shrink: 0;
+          align-self: flex-start;
           text-align: right;
           padding-right: 1.25rem;
           color: ${lineNumColor};
           user-select: none;
           font-variant-numeric: tabular-nums;
-          flex-shrink: 0;
+        }
+        .shiki-block .line > span:not(.line-number) {
+          ${wordWrap ? "white-space: pre-wrap; word-break: break-all; min-width: 0; flex: 1;" : ""}
         }
       `}</style>
       <div
