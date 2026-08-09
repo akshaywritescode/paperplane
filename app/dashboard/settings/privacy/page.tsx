@@ -15,6 +15,22 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
   if (!appwrite) redirect("/login?error=Please%20log%20in%20first");
 
   const sessionList = await appwrite.account.listSessions();
+  // Serialize to plain objects before passing to client component
+  const sessions = sessionList.sessions.map((s) => ({
+    $id: s.$id,
+    $createdAt: s.$createdAt,
+    userId: s.userId,
+    expire: s.expire,
+    provider: s.provider,
+    ip: s.ip,
+    osName: s.osName,
+    clientType: s.clientType,
+    clientName: s.clientName,
+    deviceName: s.deviceName,
+    deviceBrand: s.deviceBrand,
+    countryName: s.countryName,
+    current: s.current,
+  }));
   const params = await searchParams;
 
   return (
@@ -37,7 +53,7 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
             These devices are currently signed in to your account. Revoke any session you don&apos;t recognise.
           </p>
         </div>
-        <SessionList sessions={sessionList.sessions} />
+        <SessionList sessions={sessions} />
       </section>
     </div>
   );

@@ -5,7 +5,22 @@ import { Monitor, Smartphone, Globe, Loader2, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { revokeSession } from "../actions";
 import { toast } from "sonner";
-import type { Models } from "node-appwrite";
+
+type SessionInfo = {
+  $id: string;
+  $createdAt: string;
+  userId: string;
+  expire: string;
+  provider: string;
+  ip: string;
+  osName: string;
+  clientType: string;
+  clientName: string;
+  deviceName: string;
+  deviceBrand: string;
+  countryName: string;
+  current: boolean;
+};
 
 function DeviceIcon({ clientType }: { clientType: string }) {
   const type = clientType.toLowerCase();
@@ -26,7 +41,7 @@ function timeAgo(dateStr: string) {
   return `${days}d ago`;
 }
 
-function SessionRow({ session }: { session: Models.Session }) {
+function SessionRow({ session }: { session: SessionInfo }) {
   const [isPending, startTransition] = useTransition();
 
   const clientLabel =
@@ -91,7 +106,7 @@ function SessionRow({ session }: { session: Models.Session }) {
   );
 }
 
-export function SessionList({ sessions }: { sessions: Models.Session[] }) {
+export function SessionList({ sessions }: { sessions: SessionInfo[] }) {
   if (sessions.length === 0) {
     return (
       <p className="text-xs text-muted-foreground">No active sessions found.</p>
