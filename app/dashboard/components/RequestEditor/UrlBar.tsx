@@ -26,8 +26,50 @@ type Props = {
   onSend: () => void;
 };
 
+/**
+ * Splits a URL into coloured segments matching the screenshot:
+ * - scheme (https) → emerald
+ * - separator (://) → muted
+ * - host (domain.com) → sky
+ * - path (/todos/1) → white/foreground
+ * - query (?key=val) → amber
+ */
+function ColorizedUrl({ url }: { url: string }) {
+  if (!url) return null;
+
+  try {
+    const hasProtocol = /^https?:\/\//i.test(url);
+    const fullUrl = hasProtocol ? url : `https://${url}`;
+    const parsed = new URL(fullUrl);
+
+    const scheme   = hasProtocol ? parsed.protocol.replace(":", "") : "";
+    const sep      = hasProtocol ? "://" : "";
+    const host     = parsed.hostname + (parsed.port ? `:${parsed.port}` : "");
+    const path     = parsed.pathname !== "/" ? parsed.pathname : "/";
+    const query    = parsed.search;
+
+    return (
+      <span className="font-mono text-sm pointer-events-none select-none">
+        {scheme && <span className="text-emerald-500">{scheme}</span>}
+        {sep    && <span className="text-slate-400">{sep}</span>}
+        <span className="text-sky-400">{host}</span>
+        {path  && <span className="text-foreground">{path}</span>}
+        {query && <span className="text-amber-400">{query}</span>}
+      </span>
+    );
+  } catch {
+    // Not a valid URL yet — show as plain foreground
+    return (
+      <span className="font-mono text-sm text-foreground pointer-events-none select-none">
+        {url}
+      </span>
+    );
+  }
+}
+
 export function UrlBar({ method, url, loading, onMethodChange, onUrlChange, onSend }: Props) {
   const [open, setOpen] = useState(false);
+  const [focused, setFocused] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -68,15 +110,37 @@ export function UrlBar({ method, url, loading, onMethodChange, onUrlChange, onSe
         )}
       </div>
 
-      {/* URL input */}
-      <input
-        type="text"
-        value={url}
-        onChange={(e) => onUrlChange(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && onSend()}
-        placeholder="https://api.example.com/endpoint"
-        className="flex-1 rounded-md border bg-muted/30 px-3 py-1.5 font-mono text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition"
-      />
+      {/* URL input with colorized overlay */}
+      <div
+        className={cn(
+          "relative flex-1 overflow-hidden rounded-md border bg-muted/30 px-3 py-1.5 transition",
+          focused
+            ? "border-orange-400 ring-2 ring-orange-400/20"
+            : "border-border",
+        )}
+      >
+        {/* Colorized display — hidden when focused so cursor is visible on plain input */}
+        {!focused && url && (
+          <div className="pointer-events-none absolute inset-0 flex items-center px-3 overflow-hidden whitespace-nowrap">
+            <ColorizedUrl url={url} />
+          </div>
+        )}
+
+        <input
+          type="text"
+          value={url}
+          onChange={(e) => onUrlChange(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && onSend()}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder="https://api.example.com/endpoint"
+          className={cn(
+            "w-full bg-transparent font-mono text-sm outline-none placeholder:text-muted-foreground",
+            // Hide text colour when showing coloured overlay (not focused)
+            !focused && url ? "text-transparent caret-foreground" : "text-foreground",
+          )}
+        />
+      </div>
 
       {/* Send button */}
       <button
