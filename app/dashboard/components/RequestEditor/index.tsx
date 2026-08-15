@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { TabBar } from "./TabBar";
 import { UrlBar } from "./UrlBar";
@@ -11,6 +11,7 @@ import { buildAuthHeader, buildAuthQueryParam } from "./auth";
 import type { AuthConfig } from "./auth";
 import { DEFAULT_BODY, hasBodyContent } from "./body";
 import type { BodyConfig } from "./body";
+import { addHistoryEntry } from "@/lib/history";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
 
@@ -90,6 +91,24 @@ export function RequestEditor() {
   const router = useRouter();
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
+
+  // Restore from history (sessionStorage written by the history page)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("paperplane_restore");
+      if (!raw) return;
+      sessionStorage.removeItem("paperplane_restore");
+      const entry = JSON.parse(raw);
+      setTabs((prev) =>
+        prev.map((t) => (t.id === activeTabId ? { ...t, method: entry.method, url: entry.url } : t)),
+      );
+      if (entry.params)  setParams(entry.params);
+      if (entry.headers) setHeaders(entry.headers);
+      if (entry.body)    setBody(entry.body);
+      if (entry.auth)    setAuth(entry.auth);
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function sendToRepeater() {
     addRepeaterTab({
@@ -177,6 +196,14 @@ export function RequestEditor() {
       const data = await res.json();
 
       if (!res.ok || data.error) {
+        addHistoryEntry({
+          method: activeTab.method,
+          url: activeTab.url,
+          params,
+          headers,
+          body,
+          auth,
+        });
         setResponse({
           status: "error",
           message: data.error ?? "Request failed",
@@ -184,6 +211,20 @@ export function RequestEditor() {
         return;
       }
 
+      addHistoryEntry({
+        method: activeTab.method,
+        url: activeTab.url,
+        params,
+        headers,
+        body,
+        auth,
+        response: {
+          statusCode: data.statusCode,
+          statusText: data.statusText,
+          time: data.time,
+          size: data.size,
+        },
+      });
       setResponse({
         status: "done",
         statusCode: data.statusCode,

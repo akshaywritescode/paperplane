@@ -11,6 +11,7 @@ import { ResponsePane } from "../components/RequestEditor/ResponsePane";
 import { buildAuthHeader, buildAuthQueryParam } from "../components/RequestEditor/auth";
 import { DEFAULT_BODY, hasBodyContent } from "../components/RequestEditor/body";
 import type { BodyConfig } from "../components/RequestEditor/body";
+import { addHistoryEntry } from "@/lib/history";
 import type {
   HttpMethod,
   ParamRow,
@@ -170,12 +171,34 @@ export function RepeaterEditor() {
       const data = await res.json();
 
       if (!res.ok || data.error) {
+        addHistoryEntry({
+          method: activeTab.method,
+          url: activeTab.url,
+          params: state.params,
+          headers: state.headers,
+          body: state.body,
+          auth: state.auth,
+        });
         setTabState(activeTab.id, {
           response: { status: "error", message: data.error ?? "Request failed" },
         });
         return;
       }
 
+      addHistoryEntry({
+        method: activeTab.method,
+        url: activeTab.url,
+        params: state.params,
+        headers: state.headers,
+        body: state.body,
+        auth: state.auth,
+        response: {
+          statusCode: data.statusCode,
+          statusText: data.statusText,
+          time: data.time,
+          size: data.size,
+        },
+      });
       setTabState(activeTab.id, {
         response: {
           status: "done",
