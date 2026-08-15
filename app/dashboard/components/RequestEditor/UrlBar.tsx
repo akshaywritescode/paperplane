@@ -51,10 +51,10 @@ function ColorizedUrl({ url }: { url: string }) {
     const queryParts: React.ReactNode[] = [];
     if (parsed.search) {
       const raw = parsed.search.slice(1);
-      queryParts.push(<span key="qmark" className="text-amber-400">?</span>);
+      queryParts.push(<span key="qmark" className="text-amber-500">?</span>);
       raw.split("&").forEach((pair, i) => {
         if (i > 0) queryParts.push(<span key={`sep-${i}`} className="text-foreground">&amp;</span>);
-        queryParts.push(<span key={`pair-${i}`} className="text-amber-400">{pair}</span>);
+        queryParts.push(<span key={`pair-${i}`} className="text-amber-500">{pair}</span>);
       });
     }
 
