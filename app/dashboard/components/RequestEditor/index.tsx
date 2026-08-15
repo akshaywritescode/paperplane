@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { TabBar } from "./TabBar";
 import { UrlBar } from "./UrlBar";
@@ -12,6 +12,13 @@ import type { AuthConfig } from "./auth";
 import { DEFAULT_BODY, hasBodyContent } from "./body";
 import type { BodyConfig } from "./body";
 import { addHistoryEntryAction } from "@/app/dashboard/history/actions";
+import {
+  fetchCollectionsAction,
+  createCollectionAction,
+  saveRequestAction,
+} from "@/app/dashboard/collections/actions";
+import type { Collection } from "@/lib/collections";
+import { BookmarkPlus, X, Loader2, FolderPlus } from "lucide-react";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
 
@@ -79,7 +86,166 @@ function buildBodyPayload(body: BodyConfig, method: HttpMethod) {
   return {};
 }
 
+// ─── Save to Collection modal ────────────────────────────────────────────────
+function SaveToCollectionButton({
+  method, url, tabName, params, headers, body, auth,
+}: {
+  method: HttpMethod; url: string; tabName: string;
+  params: ParamRow[]; headers: HeaderRow[]; body: BodyConfig; auth: AuthConfig;
+}) {
+  const [open, setOpen] = useState(false);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [name, setName] = useState("");
+  const [selectedColId, setSelectedColId] = useState<string>("");
+  const [newColName, setNewColName] = useState("");
+  const [creatingCol, setCreatingCol] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+
+  async function handleOpen() {
+    setOpen(true);
+    setSaved(false);
+    setName(tabName !== "untitled" ? tabName : url ? url.split("/").pop() || "" : "");
+    setLoading(true);
+    const cols = await fetchCollectionsAction();
+    setCollections(cols);
+    setSelectedColId(cols[0]?.id ?? "");
+    setLoading(false);
+    setTimeout(() => nameRef.current?.focus(), 50);
+  }
+
+  async function handleCreateCollection() {
+    if (!newColName.trim()) return;
+    setCreatingCol(true);
+    const col = await createCollectionAction(newColName.trim());
+    if (col) {
+      setCollections(prev => [...prev, col]);
+      setSelectedColId(col.id);
+      setNewColName("");
+    }
+    setCreatingCol(false);
+  }
+
+  async function handleSave() {
+    if (!name.trim() || !selectedColId) return;
+    setSaving(true);
+    await saveRequestAction({
+      collectionId: selectedColId,
+      name: name.trim(),
+      method, url, params, headers, body, auth,
+    });
+    setSaving(false);
+    setSaved(true);
+    setTimeout(() => { setOpen(false); setSaved(false); }, 900);
+  }
+
+  return (
+    <>
+      <button
+        onClick={handleOpen}
+        title="Save to collection"
+        className="flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-muted/50 px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
+      >
+        <BookmarkPlus className="size-3.5" />
+        <span className="hidden sm:inline">Save</span>
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-xl border bg-background p-5 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Save to Collection</h2>
+              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {loading ? (
+              <div className="flex h-24 items-center justify-center text-muted-foreground">
+                <Loader2 className="size-5 animate-spin" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Request name */}
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Request name</label>
+                  <input
+                    ref={nameRef}
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && handleSave()}
+                    placeholder="Get users"
+                    className="w-full rounded-md border bg-muted/30 px-3 py-2 text-sm outline-none transition focus:border-orange-400"
+                  />
+                </div>
+
+                {/* Collection picker */}
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Collection</label>
+                  {collections.length === 0 ? (
+                    <p className="text-xs text-muted-foreground italic mb-2">No collections yet — create one below.</p>
+                  ) : (
+                    <select
+                      value={selectedColId}
+                      onChange={e => setSelectedColId(e.target.value)}
+                      className="w-full rounded-md border bg-muted/30 px-3 py-2 text-sm outline-none transition focus:border-orange-400"
+                    >
+                      {collections.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                {/* Quick create collection */}
+                <div className="flex gap-2">
+                  <input
+                    value={newColName}
+                    onChange={e => setNewColName(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && handleCreateCollection()}
+                    placeholder="New collection name…"
+                    className="flex-1 rounded-md border bg-muted/30 px-3 py-1.5 text-xs outline-none transition focus:border-orange-400"
+                  />
+                  <button
+                    onClick={handleCreateCollection}
+                    disabled={!newColName.trim() || creatingCol}
+                    className="flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs transition hover:bg-muted disabled:opacity-40"
+                  >
+                    {creatingCol ? <Loader2 className="size-3 animate-spin" /> : <FolderPlus className="size-3" />}
+                    Create
+                  </button>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={() => setOpen(false)}
+                    className="flex-1 rounded-md border px-3 py-2 text-xs transition hover:bg-muted"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={!name.trim() || !selectedColId || saving || saved}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-md bg-orange-500 px-3 py-2 text-xs font-medium text-white transition hover:bg-orange-600 disabled:opacity-50"
+                  >
+                    {saving && <Loader2 className="size-3 animate-spin" />}
+                    {saved ? "✓ Saved!" : "Save"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function RequestEditor() {
+
   const [tabs, setTabs] = useState<RequestTab[]>([DEFAULT_TAB]);
   const [activeTabId, setActiveTabId] = useState("1");
   const [params, setParams] = useState<ParamRow[]>([]);
@@ -281,16 +447,29 @@ export function RequestEditor() {
         }
       />
 
-      {/* URL bar */}
-      <UrlBar
+      {/* URL bar row — Send + Save */}
+      <div className="flex items-center gap-2 border-b pr-2">
+        <div className="flex-1 min-w-0">
+          <UrlBar
+            method={activeTab.method}
+            url={activeTab.url}
+            loading={response.status === "loading"}
+            auth={auth}
+            onMethodChange={(method) => updateTab({ method })}
+            onUrlChange={(url) => updateTab({ url })}
+            onSend={sendRequest}
+          />
+        </div>
+        <SaveToCollectionButton
           method={activeTab.method}
           url={activeTab.url}
-          loading={response.status === "loading"}
+          tabName={activeTab.name}
+          params={params}
+          headers={headers}
+          body={body}
           auth={auth}
-          onMethodChange={(method) => updateTab({ method })}
-          onUrlChange={(url) => updateTab({ url })}
-          onSend={sendRequest}
         />
+      </div>
 
       {/* Split panes */}
       <div className="flex flex-1 overflow-hidden">
