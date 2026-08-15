@@ -11,19 +11,20 @@ import {
   ContextMenuShortcut,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import type { HttpMethod, ParamRow, HeaderRow, AuthConfig } from "./index";
+import type { HttpMethod, ParamRow, HeaderRow, AuthConfig, BodyConfig, FormField, MultipartField, RawContentType } from "./index";
 import { buildAuthHeader, buildAuthQueryParam } from "./auth";
+import { DEFAULT_BODY, hasBodyContent } from "./body";
 
 type Props = {
   method: HttpMethod;
   url: string;
   params: ParamRow[];
   headers: HeaderRow[];
-  body: string;
+  body: BodyConfig;
   auth: AuthConfig;
   onParamsChange: (rows: ParamRow[]) => void;
   onHeadersChange: (rows: HeaderRow[]) => void;
-  onBodyChange: (body: string) => void;
+  onBodyChange: (body: BodyConfig) => void;
   onAuthChange: (auth: AuthConfig) => void;
   onSendToRepeater: () => void;
 };
@@ -55,7 +56,7 @@ function buildRawPreview(
   url: string,
   params: ParamRow[],
   headers: HeaderRow[],
-  body: string,
+  body: BodyConfig,
   auth: AuthConfig,
 ): React.ReactNode[] {
   const lines: React.ReactNode[] = [];
@@ -139,8 +140,8 @@ function buildRawPreview(
     );
   });
 
-  if (body && ["POST", "PUT", "PATCH"].includes(method)) {
-    const len = new Blob([body]).size;
+  if (hasBodyContent(body) && body.type === "raw" && ["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    const len = new Blob([body.content]).size;
     lines.push(
       <div key={lineNum} className="flex gap-2">
         <span className={`w-8 shrink-0 select-none text-right ${RAW_COLORS.lineNum}`}>{lineNum++}</span>
@@ -160,8 +161,13 @@ function buildRawPreview(
     </div>,
   );
 
-  if (body && ["POST", "PUT", "PATCH"].includes(method)) {
-    body.split("\n").forEach((line, i) => {
+  const bodyStr =
+    body.type === "raw" ? body.content
+    : body.type === "form" ? "<form fields — see Body tab>"
+    : "<multipart — see Body tab>";
+
+  if (hasBodyContent(body) && ["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    bodyStr.split("\n").forEach((line, i) => {
       lines.push(
         <div key={`body-${i}`} className="flex gap-2">
           <span className={`w-8 shrink-0 select-none text-right ${RAW_COLORS.lineNum}`}>{lineNum++}</span>
@@ -251,7 +257,301 @@ function KeyValueTable({
   );
 }
 
+// ─── BODY PANEL ─────────────────────────────────────────────────────────────
+
+const BODY_MODES = [
+  { id: "raw",        label: "Raw"       },
+  { id: "form",       label: "Form"      },
+  { id: "multipart",  label: "Multipart" },
+] as const;
+
+const RAW_CONTENT_TYPES: { value: RawContentType; label: string }[] = [
+  { value: "application/json",       label: "JSON"       },
+  { value: "text/plain",             label: "Text"       },
+  { value: "application/xml",        label: "XML"        },
+  { value: "text/html",              label: "HTML"       },
+  { value: "application/javascript", label: "JavaScript" },
+];
+
+function newFormField(): FormField {
+  return { id: crypto.randomUUID(), enabled: true, name: "", value: "" };
+}
+
+function newMultipartField(): MultipartField {
+  return { id: crypto.randomUUID(), enabled: true, name: "", isFile: false, value: "" };
+}
+
+function BodyPanel({
+  body,
+  onBodyChange,
+}: {
+  body: BodyConfig;
+  onBodyChange: (b: BodyConfig) => void;
+}) {
+  function switchMode(mode: BodyConfig["type"]) {
+    if (mode === "raw")       onBodyChange(DEFAULT_BODY);
+    if (mode === "form")      onBodyChange({ type: "form",      fields: [newFormField()] });
+    if (mode === "multipart") onBodyChange({ type: "multipart", fields: [newMultipartField()] });
+  }
+
+  return (
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* Mode selector */}
+      <div className="flex shrink-0 gap-1 border-b p-2">
+        <div className="flex gap-1 rounded-lg bg-muted p-1">
+          {BODY_MODES.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => switchMode(m.id)}
+              className={cn(
+                "rounded-md px-3 py-1 text-xs font-medium transition-colors",
+                body.type === m.id
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+        {/* Content-type picker for Raw mode */}
+        {body.type === "raw" && (
+          <select
+            value={body.contentType}
+            onChange={(e) =>
+              onBodyChange({ ...body, contentType: e.target.value as RawContentType })
+            }
+            className="ml-auto rounded-md border bg-transparent px-2 py-1 text-xs text-muted-foreground outline-none transition focus:border-orange-400 focus:text-foreground"
+          >
+            {RAW_CONTENT_TYPES.map((ct) => (
+              <option key={ct.value} value={ct.value}>
+                {ct.label}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* Raw */}
+      {body.type === "raw" && (
+        <textarea
+          value={body.content}
+          onChange={(e) => onBodyChange({ ...body, content: e.target.value })}
+          placeholder={
+            body.contentType === "application/json"
+              ? '{\n  "key": "value"\n}'
+              : body.contentType === "application/xml"
+              ? "<root>\n  <key>value</key>\n</root>"
+              : "Enter body content..."
+          }
+          spellCheck={false}
+          className="h-full w-full resize-none bg-transparent p-4 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground"
+        />
+      )}
+
+      {/* Form (x-www-form-urlencoded) */}
+      {body.type === "form" && (
+        <div className="flex flex-1 flex-col overflow-auto">
+          {body.fields.map((row) => (
+            <div key={row.id} className="group flex items-center border-b last:border-0 text-xs">
+              <button
+                onClick={() =>
+                  onBodyChange({
+                    ...body,
+                    fields: body.fields.map((f) =>
+                      f.id === row.id ? { ...f, enabled: !f.enabled } : f,
+                    ),
+                  })
+                }
+                className="px-2 text-muted-foreground hover:text-foreground"
+              >
+                <span className={cn("text-[10px]", row.enabled ? "text-orange-500" : "text-muted-foreground/40")}>●</span>
+              </button>
+              <input
+                value={row.name}
+                onChange={(e) =>
+                  onBodyChange({
+                    ...body,
+                    fields: body.fields.map((f) =>
+                      f.id === row.id ? { ...f, name: e.target.value } : f,
+                    ),
+                  })
+                }
+                placeholder="field name"
+                className="flex-1 bg-transparent px-3 py-2 font-mono outline-none focus:bg-orange-50 dark:focus:bg-orange-950/20 transition"
+              />
+              <span className="shrink-0 text-muted-foreground/40">=</span>
+              <input
+                value={row.value}
+                onChange={(e) =>
+                  onBodyChange({
+                    ...body,
+                    fields: body.fields.map((f) =>
+                      f.id === row.id ? { ...f, value: e.target.value } : f,
+                    ),
+                  })
+                }
+                placeholder="value"
+                className="flex-1 bg-transparent px-3 py-2 font-mono outline-none focus:bg-orange-50 dark:focus:bg-orange-950/20 transition"
+              />
+              <button
+                onClick={() =>
+                  onBodyChange({ ...body, fields: body.fields.filter((f) => f.id !== row.id) })
+                }
+                className="px-2 text-transparent group-hover:text-muted-foreground hover:!text-destructive transition"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          <button
+            onClick={() => onBodyChange({ ...body, fields: [...body.fields, newFormField()] })}
+            className="flex items-center gap-1.5 px-4 py-2 text-xs text-muted-foreground hover:text-foreground transition"
+          >
+            <Plus className="size-3" /> Add field
+          </button>
+        </div>
+      )}
+
+      {/* Multipart */}
+      {body.type === "multipart" && (
+        <div className="flex flex-1 flex-col overflow-auto">
+          {body.fields.map((row) => (
+            <div key={row.id} className="group flex items-center border-b last:border-0 text-xs gap-1 px-1">
+              <button
+                onClick={() =>
+                  onBodyChange({
+                    ...body,
+                    fields: body.fields.map((f) =>
+                      f.id === row.id ? { ...f, enabled: !f.enabled } : f,
+                    ) as MultipartField[],
+                  })
+                }
+                className="px-1 shrink-0"
+              >
+                <span className={cn("text-[10px]", row.enabled ? "text-orange-500" : "text-muted-foreground/40")}>●</span>
+              </button>
+              <input
+                value={row.name}
+                onChange={(e) =>
+                  onBodyChange({
+                    ...body,
+                    fields: body.fields.map((f) =>
+                      f.id === row.id ? { ...f, name: e.target.value } : f,
+                    ) as MultipartField[],
+                  })
+                }
+                placeholder="name"
+                className="w-28 shrink-0 bg-transparent px-2 py-2 font-mono outline-none focus:bg-orange-50 dark:focus:bg-orange-950/20 transition"
+              />
+              {/* Text / File toggle */}
+              <div className="flex shrink-0 gap-0.5 rounded-md border p-0.5">
+                {(["text", "file"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => {
+                      if (t === "text" && row.isFile) {
+                        onBodyChange({
+                          ...body,
+                          fields: body.fields.map((f) =>
+                            f.id === row.id
+                              ? { id: f.id, enabled: f.enabled, name: f.name, isFile: false, value: "" }
+                              : f,
+                          ) as MultipartField[],
+                        });
+                      } else if (t === "file" && !row.isFile) {
+                        onBodyChange({
+                          ...body,
+                          fields: body.fields.map((f) =>
+                            f.id === row.id
+                              ? { id: f.id, enabled: f.enabled, name: f.name, isFile: true, fileName: "", fileType: "", fileData: "" }
+                              : f,
+                          ) as MultipartField[],
+                        });
+                      }
+                    }}
+                    className={cn(
+                      "rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors capitalize",
+                      (t === "text") === !row.isFile
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+              {/* Value or file picker */}
+              {!row.isFile ? (
+                <input
+                  value={row.value}
+                  onChange={(e) =>
+                    onBodyChange({
+                      ...body,
+                      fields: body.fields.map((f) =>
+                        f.id === row.id ? { ...f, value: e.target.value } : f,
+                      ) as MultipartField[],
+                    })
+                  }
+                  placeholder="value"
+                  className="flex-1 bg-transparent px-2 py-2 font-mono outline-none focus:bg-orange-50 dark:focus:bg-orange-950/20 transition min-w-0"
+                />
+              ) : (
+                <label className="flex flex-1 min-w-0 cursor-pointer items-center gap-2 px-2 py-1.5">
+                  <span className="truncate text-muted-foreground">
+                    {row.fileName || "Choose file…"}
+                  </span>
+                  <input
+                    type="file"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        const b64 = (reader.result as string).split(",")[1] ?? "";
+                        onBodyChange({
+                          ...body,
+                          fields: body.fields.map((f) =>
+                            f.id === row.id
+                              ? { ...f, fileName: file.name, fileType: file.type || "application/octet-stream", fileData: b64 }
+                              : f,
+                          ) as MultipartField[],
+                        });
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                </label>
+              )}
+              <button
+                onClick={() =>
+                  onBodyChange({ ...body, fields: body.fields.filter((f) => f.id !== row.id) as MultipartField[] })
+                }
+                className="shrink-0 px-2 text-transparent group-hover:text-muted-foreground hover:!text-destructive transition"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          <button
+            onClick={() =>
+              onBodyChange({ ...body, fields: [...body.fields, newMultipartField()] as MultipartField[] })
+            }
+            className="flex items-center gap-1.5 px-4 py-2 text-xs text-muted-foreground hover:text-foreground transition"
+          >
+            <Plus className="size-3" /> Add field
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── AUTH PANEL ─────────────────────────────────────────────────────────────
+
 const AUTH_MODES = [
+
   { id: "none",   label: "None"    },
   { id: "bearer", label: "Bearer"  },
   { id: "basic",  label: "Basic"   },
@@ -469,6 +769,9 @@ export function RequestPane({
               {t.id === "auth" && auth.type !== "none" && (
                 <span className="ml-1.5 inline-block size-1.5 rounded-full bg-orange-500 align-middle" />
               )}
+              {t.id === "body" && hasBodyContent(body) && (
+                <span className="ml-1.5 inline-block size-1.5 rounded-full bg-orange-500 align-middle" />
+              )}
             </button>
           ))}
         </div>
@@ -507,13 +810,7 @@ export function RequestPane({
             <AuthPanel auth={auth} onAuthChange={onAuthChange} />
           )}
           {tab === "body" && (
-            <textarea
-              value={body}
-              onChange={(e) => onBodyChange(e.target.value)}
-              placeholder='{"key": "value"}'
-              spellCheck={false}
-              className="h-full w-full resize-none bg-transparent p-4 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground"
-            />
+            <BodyPanel body={body} onBodyChange={onBodyChange} />
           )}
         </div>
       </ContextMenuTrigger>

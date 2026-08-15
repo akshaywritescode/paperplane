@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useState, useCallback } from "react";
 import type { HttpMethod, ParamRow, HeaderRow, AuthConfig } from "../components/RequestEditor";
+import type { BodyConfig } from "../components/RequestEditor/body";
+import { DEFAULT_BODY } from "../components/RequestEditor/body";
 
 export type RepeaterTab = {
   id: string;
@@ -10,7 +12,7 @@ export type RepeaterTab = {
   url: string;
   params: ParamRow[];
   headers: HeaderRow[];
-  body: string;
+  body: BodyConfig;
   auth: AuthConfig;
 };
 

@@ -9,6 +9,8 @@ import { ResponsePane } from "./ResponsePane";
 import { useRepeater } from "../../context/RepeaterContext";
 import { buildAuthHeader, buildAuthQueryParam } from "./auth";
 import type { AuthConfig } from "./auth";
+import { DEFAULT_BODY, hasBodyContent } from "./body";
+import type { BodyConfig } from "./body";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
 
@@ -22,6 +24,7 @@ export type RequestTab = {
 export type ParamRow = { id: string; enabled: boolean; name: string; value: string };
 export type HeaderRow = { id: string; enabled: boolean; name: string; value: string };
 export type { AuthConfig } from "./auth";
+export type { BodyConfig, FormField, MultipartField, RawContentType } from "./body";
 
 export type ResponseState =
   | { status: "idle" }
@@ -44,12 +47,43 @@ const DEFAULT_TAB: RequestTab = {
   url: "",
 };
 
+/** Build the proxy payload fields for the body config */
+function buildBodyPayload(body: BodyConfig, method: HttpMethod) {
+  const METHODS_WITH_BODY = ["POST", "PUT", "PATCH", "DELETE"];
+  if (!METHODS_WITH_BODY.includes(method) || !hasBodyContent(body)) return {};
+
+  if (body.type === "raw") {
+    return { bodyType: "raw", rawBody: body.content, rawContentType: body.contentType };
+  }
+  if (body.type === "form") {
+    return {
+      bodyType: "form",
+      formFields: body.fields
+        .filter((f) => f.enabled && f.name)
+        .map((f) => ({ name: f.name, value: f.value, enabled: true })),
+    };
+  }
+  if (body.type === "multipart") {
+    return {
+      bodyType: "multipart",
+      multipartFields: body.fields
+        .filter((f) => f.enabled && f.name)
+        .map((f) =>
+          f.isFile
+            ? { name: f.name, isFile: true, fileName: f.fileName, fileType: f.fileType, fileData: f.fileData, enabled: true }
+            : { name: f.name, isFile: false, value: f.value, enabled: true },
+        ),
+    };
+  }
+  return {};
+}
+
 export function RequestEditor() {
   const [tabs, setTabs] = useState<RequestTab[]>([DEFAULT_TAB]);
   const [activeTabId, setActiveTabId] = useState("1");
   const [params, setParams] = useState<ParamRow[]>([]);
   const [headers, setHeaders] = useState<HeaderRow[]>([]);
-  const [body, setBody] = useState("");
+  const [body, setBody] = useState<BodyConfig>(DEFAULT_BODY);
   const [auth, setAuth] = useState<AuthConfig>({ type: "none" });
   const [response, setResponse] = useState<ResponseState>({ status: "idle" });
   const { addTab: addRepeaterTab } = useRepeater();
@@ -77,7 +111,7 @@ export function RequestEditor() {
     setActiveTabId(id);
     setParams([]);
     setHeaders([]);
-    setBody("");
+    setBody(DEFAULT_BODY);
     setAuth({ type: "none" });
     setResponse({ status: "idle" });
   }
@@ -136,9 +170,7 @@ export function RequestEditor() {
           url: finalUrl,
           method: activeTab.method,
           headers: reqHeaders,
-          body: ["POST", "PUT", "PATCH"].includes(activeTab.method)
-            ? body || undefined
-            : undefined,
+          ...buildBodyPayload(body, activeTab.method),
         }),
       });
 
@@ -185,14 +217,14 @@ export function RequestEditor() {
 
       {/* URL bar */}
       <UrlBar
-        method={activeTab.method}
-        url={activeTab.url}
-        loading={response.status === "loading"}
-        auth={auth}
-        onMethodChange={(method) => updateTab({ method })}
-        onUrlChange={(url) => updateTab({ url })}
-        onSend={sendRequest}
-      />
+          method={activeTab.method}
+          url={activeTab.url}
+          loading={response.status === "loading"}
+          auth={auth}
+          onMethodChange={(method) => updateTab({ method })}
+          onUrlChange={(url) => updateTab({ url })}
+          onSend={sendRequest}
+        />
 
       {/* Split panes */}
       <div className="flex flex-1 overflow-hidden">

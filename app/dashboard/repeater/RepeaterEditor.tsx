@@ -9,6 +9,8 @@ import { UrlBar } from "../components/RequestEditor/UrlBar";
 import { RequestPane } from "../components/RequestEditor/RequestPane";
 import { ResponsePane } from "../components/RequestEditor/ResponsePane";
 import { buildAuthHeader, buildAuthQueryParam } from "../components/RequestEditor/auth";
+import { DEFAULT_BODY, hasBodyContent } from "../components/RequestEditor/body";
+import type { BodyConfig } from "../components/RequestEditor/body";
 import type {
   HttpMethod,
   ParamRow,
@@ -32,7 +34,7 @@ const METHOD_COLORS: Record<string, string> = {
 type TabState = {
   params: ParamRow[];
   headers: HeaderRow[];
-  body: string;
+  body: BodyConfig;
   auth: AuthConfig;
   response: ResponseState;
 };
@@ -69,7 +71,7 @@ export function RepeaterEditor() {
     return tabStates[id] ?? {
       params: tabs.find((t) => t.id === id)?.params ?? [],
       headers: tabs.find((t) => t.id === id)?.headers ?? [],
-      body: tabs.find((t) => t.id === id)?.body ?? "",
+      body: tabs.find((t) => t.id === id)?.body ?? DEFAULT_BODY,
       auth: tabs.find((t) => t.id === id)?.auth ?? { type: "none" },
       response: { status: "idle" },
     };
@@ -89,7 +91,7 @@ export function RepeaterEditor() {
       url: "",
       params: [],
       headers: [],
-      body: "",
+      body: DEFAULT_BODY,
       auth: { type: "none" },
     });
   }
@@ -136,6 +138,23 @@ export function RepeaterEditor() {
         `${encodeURIComponent(authQp.key)}=${encodeURIComponent(authQp.value)}`;
     }
 
+    const METHODS_WITH_BODY = ["POST", "PUT", "PATCH", "DELETE"];
+    const bodyPayload: Record<string, unknown> = {};
+    if (METHODS_WITH_BODY.includes(activeTab.method) && hasBodyContent(state.body)) {
+      const b = state.body;
+      if (b.type === "raw") {
+        bodyPayload.bodyType = "raw";
+        bodyPayload.rawBody = b.content;
+        bodyPayload.rawContentType = b.contentType;
+      } else if (b.type === "form") {
+        bodyPayload.bodyType = "form";
+        bodyPayload.formFields = b.fields.filter((f) => f.enabled && f.name);
+      } else if (b.type === "multipart") {
+        bodyPayload.bodyType = "multipart";
+        bodyPayload.multipartFields = b.fields.filter((f) => f.enabled && f.name);
+      }
+    }
+
     try {
       const res = await fetch("/api/proxy", {
         method: "POST",
@@ -144,9 +163,7 @@ export function RepeaterEditor() {
           url: finalUrl,
           method: activeTab.method,
           headers: reqHeaders,
-          body: ["POST", "PUT", "PATCH"].includes(activeTab.method)
-            ? state.body || undefined
-            : undefined,
+          ...bodyPayload,
         }),
       });
 
