@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2, RotateCw } from "lucide-react";
+import { Plus, Trash2, RotateCw, ChevronsUpDown, Check } from "lucide-react";
+import { SiJson, SiHtml5, SiXml, SiJavascript } from "@icons-pack/react-simple-icons";
 import { cn } from "@/lib/utils";
 import {
   ContextMenu,
@@ -11,6 +12,13 @@ import {
   ContextMenuShortcut,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { CodeBlock, detectLang } from "./CodeBlock";
 import type { HttpMethod, ParamRow, HeaderRow, AuthConfig, BodyConfig, FormField, MultipartField, RawContentType } from "./index";
 import { buildAuthHeader, buildAuthQueryParam } from "./auth";
 import { DEFAULT_BODY, hasBodyContent } from "./body";
@@ -265,12 +273,26 @@ const BODY_MODES = [
   { id: "multipart",  label: "Multipart" },
 ] as const;
 
-const RAW_CONTENT_TYPES: { value: RawContentType; label: string }[] = [
-  { value: "application/json",       label: "JSON"       },
-  { value: "text/plain",             label: "Text"       },
-  { value: "application/xml",        label: "XML"        },
-  { value: "text/html",              label: "HTML"       },
-  { value: "application/javascript", label: "JavaScript" },
+type BodyLang = "json" | "html" | "xml" | "text" | "javascript";
+
+const BODY_LANG_ICONS: Record<BodyLang, React.ReactNode> = {
+  json:       <SiJson       className="size-3.5 shrink-0" />,
+  html:       <SiHtml5      className="size-3.5 shrink-0" />,
+  xml:        <SiXml        className="size-3.5 shrink-0" />,
+  javascript: <SiJavascript className="size-3.5 shrink-0" />,
+  text: (
+    <svg viewBox="0 0 16 16" className="size-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+      <path d="M3 5h10M3 8h7M3 11h5"/>
+    </svg>
+  ),
+};
+
+const RAW_CONTENT_TYPES: { value: RawContentType; label: string; lang: BodyLang }[] = [
+  { value: "application/json",       label: "JSON",       lang: "json"       },
+  { value: "text/plain",             label: "Text",       lang: "text"       },
+  { value: "application/xml",        label: "XML",        lang: "xml"        },
+  { value: "text/html",              label: "HTML",       lang: "html"       },
+  { value: "application/javascript", label: "JavaScript", lang: "javascript" },
 ];
 
 function newFormField(): FormField {
@@ -314,40 +336,67 @@ function BodyPanel({
             </button>
           ))}
         </div>
-        {/* Content-type picker for Raw mode */}
-        {body.type === "raw" && (
-          <select
-            value={body.contentType}
-            onChange={(e) =>
-              onBodyChange({ ...body, contentType: e.target.value as RawContentType })
-            }
-            className="ml-auto rounded-md border bg-transparent px-2 py-1 text-xs text-muted-foreground outline-none transition focus:border-orange-400 focus:text-foreground"
-          >
-            {RAW_CONTENT_TYPES.map((ct) => (
-              <option key={ct.value} value={ct.value}>
-                {ct.label}
-              </option>
-            ))}
-          </select>
-        )}
+        {/* Content-type / language picker for Raw mode */}
+        {body.type === "raw" && (() => {
+          const entry = RAW_CONTENT_TYPES.find((c) => c.value === body.contentType);
+          const currentLang = entry?.lang ?? "text";
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger className="ml-auto flex items-center gap-1.5 rounded-md border border-border bg-muted/50 px-2 py-1 text-xs font-medium text-foreground transition hover:bg-muted outline-none">
+                {entry?.label ?? "Text"}
+                {BODY_LANG_ICONS[currentLang]}
+                <ChevronsUpDown className="size-3 text-muted-foreground" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="bottom" align="end" sideOffset={4} className="w-36">
+                {RAW_CONTENT_TYPES.map((ct) => (
+                  <DropdownMenuItem
+                    key={ct.value}
+                    onClick={() => onBodyChange({ ...body, contentType: ct.value })}
+                    className="flex items-center justify-between text-xs"
+                  >
+                    <span className="flex items-center gap-2">
+                      {BODY_LANG_ICONS[ct.lang]}
+                      {ct.label}
+                    </span>
+                    {body.contentType === ct.value && <Check className="size-3.5 text-orange-500" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        })()}
       </div>
 
-      {/* Raw */}
-      {body.type === "raw" && (
-        <textarea
-          value={body.content}
-          onChange={(e) => onBodyChange({ ...body, content: e.target.value })}
-          placeholder={
-            body.contentType === "application/json"
-              ? '{\n  "key": "value"\n}'
-              : body.contentType === "application/xml"
-              ? "<root>\n  <key>value</key>\n</root>"
-              : "Enter body content..."
-          }
-          spellCheck={false}
-          className="h-full w-full resize-none bg-transparent p-4 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground"
-        />
-      )}
+      {/* Raw — syntax-highlighted editor with CodeBlock overlay */}
+      {body.type === "raw" && (() => {
+        const entry = RAW_CONTENT_TYPES.find((c) => c.value === body.contentType);
+        const lang = entry?.lang ?? "text";
+        const placeholder =
+          lang === "json" ? '{\n  "key": "value"\n}'
+          : lang === "xml"  ? "<root>\n  <key>value</key>\n</root>"
+          : "Enter body content...";
+        return (
+          <div className="relative flex-1 overflow-hidden">
+            {/* Syntax-highlighted layer (pointer-events-none so textarea stays interactive) */}
+            {body.content && (
+              <div className="pointer-events-none absolute inset-0 overflow-auto">
+                <CodeBlock code={body.content} lang={lang} />
+              </div>
+            )}
+            {/* Editable textarea on top — transparent text so CodeBlock shows through */}
+            <textarea
+              value={body.content}
+              onChange={(e) => onBodyChange({ ...body, content: e.target.value })}
+              placeholder={placeholder}
+              spellCheck={false}
+              className={cn(
+                "absolute inset-0 h-full w-full resize-none bg-transparent p-4 font-mono text-xs outline-none placeholder:text-muted-foreground caret-foreground",
+                body.content ? "text-transparent" : "text-foreground",
+              )}
+            />
+          </div>
+        );
+      })()}
 
       {/* Form (x-www-form-urlencoded) */}
       {body.type === "form" && (
