@@ -18,7 +18,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CodeBlock, detectLang } from "./CodeBlock";
+import { getSingletonHighlighter } from "shiki";
+import { detectLang } from "./CodeBlock";
 import type { HttpMethod, ParamRow, HeaderRow, AuthConfig, BodyConfig, FormField, MultipartField, RawContentType } from "./index";
 import { buildAuthHeader, buildAuthQueryParam } from "./auth";
 import { DEFAULT_BODY, hasBodyContent } from "./body";
@@ -265,6 +266,91 @@ function KeyValueTable({
   );
 }
 
+// ─── SYNTAX TEXTAREA ────────────────────────────────────────────────────────
+// A textarea with a pixel-perfect highlighted <pre> behind it.
+// No line numbers — that would shift the x-offset and break cursor alignment.
+
+const EDITOR_STYLE = {
+  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+  fontSize:   "0.75rem",
+  lineHeight: "1.625",   // matches Tailwind leading-relaxed = 1.625
+  padding:    "1rem",
+  tabSize:    2,
+} as const;
+
+function useDarkMode() {
+  const [dark, setDark] = useState(() =>
+    typeof window !== "undefined"
+      ? document.documentElement.classList.contains("dark")
+      : false,
+  );
+  useEffect(() => {
+    const obs = new MutationObserver(() =>
+      setDark(document.documentElement.classList.contains("dark")),
+    );
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
+  return dark;
+}
+
+function SyntaxTextarea({
+  value,
+  lang,
+  placeholder,
+  onChange,
+}: {
+  value: string;
+  lang: "json" | "html" | "xml" | "text" | "javascript";
+  placeholder?: string;
+  onChange: (v: string) => void;
+}) {
+  const dark = useDarkMode();
+  const theme = dark ? "tokyo-night" : "one-light";
+  const [highlighted, setHighlighted] = useState("");
+
+  useEffect(() => {
+    if (!value) { setHighlighted(""); return; }
+    getSingletonHighlighter({
+      themes: ["tokyo-night", "one-light"],
+      langs:  ["json", "html", "xml", "javascript"],
+    }).then((hl) => {
+      // codeToHtml wraps in <pre><code> with theme background — we strip the wrapper
+      const raw = hl.codeToHtml(value, {
+        lang: lang === "text" ? "text" : lang,
+        theme,
+      });
+      // Extract just the inner content between <code ...> and </code>
+      const inner = raw.match(/\<code[^>]*\>([\s\S]*?)\<\/code\>/);
+      setHighlighted(inner ? inner[1] : "");
+    });
+  }, [value, lang, theme]);
+
+  return (
+    <div className="relative flex-1 overflow-hidden">
+      {/* Highlighted layer — pointer-events-none so textarea receives all events */}
+      <pre
+        aria-hidden
+        className="pointer-events-none absolute inset-0 m-0 overflow-auto whitespace-pre"
+        style={EDITOR_STYLE}
+        dangerouslySetInnerHTML={{ __html: highlighted || "" }}
+      />
+      {/* Actual editable textarea — transparent text so highlighted layer shows */}
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        spellCheck={false}
+        className="absolute inset-0 h-full w-full resize-none overflow-auto bg-transparent outline-none placeholder:text-muted-foreground caret-foreground"
+        style={{
+          ...EDITOR_STYLE,
+          color: value ? "transparent" : undefined,
+        }}
+      />
+    </div>
+  );
+}
+
 // ─── BODY PANEL ─────────────────────────────────────────────────────────────
 
 const BODY_MODES = [
@@ -367,7 +453,7 @@ function BodyPanel({
         })()}
       </div>
 
-      {/* Raw — syntax-highlighted editor with CodeBlock overlay */}
+      {/* Raw — syntax-highlighted editor, pixel-aligned via SyntaxTextarea */}
       {body.type === "raw" && (() => {
         const entry = RAW_CONTENT_TYPES.find((c) => c.value === body.contentType);
         const lang = entry?.lang ?? "text";
@@ -376,25 +462,12 @@ function BodyPanel({
           : lang === "xml"  ? "<root>\n  <key>value</key>\n</root>"
           : "Enter body content...";
         return (
-          <div className="relative flex-1 overflow-hidden">
-            {/* Syntax-highlighted layer (pointer-events-none so textarea stays interactive) */}
-            {body.content && (
-              <div className="pointer-events-none absolute inset-0 overflow-auto">
-                <CodeBlock code={body.content} lang={lang} />
-              </div>
-            )}
-            {/* Editable textarea on top — transparent text so CodeBlock shows through */}
-            <textarea
-              value={body.content}
-              onChange={(e) => onBodyChange({ ...body, content: e.target.value })}
-              placeholder={placeholder}
-              spellCheck={false}
-              className={cn(
-                "absolute inset-0 h-full w-full resize-none bg-transparent p-4 font-mono text-xs outline-none placeholder:text-muted-foreground caret-foreground",
-                body.content ? "text-transparent" : "text-foreground",
-              )}
-            />
-          </div>
+          <SyntaxTextarea
+            value={body.content}
+            lang={lang}
+            placeholder={placeholder}
+            onChange={(content) => onBodyChange({ ...body, content })}
+          />
         );
       })()}
 
