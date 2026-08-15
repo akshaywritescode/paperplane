@@ -272,6 +272,7 @@ export function RepeaterEditor() {
             method={activeTab.method}
             url={activeTab.url}
             loading={state.response.status === "loading"}
+            auth={state.auth}
             onMethodChange={(method) => updateTab(activeTab.id, { method })}
             onUrlChange={(url) => updateTab(activeTab.id, { url })}
             onSend={sendRequest}

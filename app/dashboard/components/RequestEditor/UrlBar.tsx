@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, ChevronDown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { HttpMethod } from "./index";
+import type { HttpMethod, AuthConfig } from "./index";
+import { buildAuthQueryParam } from "./auth";
 
 const METHODS: HttpMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
 
@@ -21,6 +22,7 @@ type Props = {
   method: HttpMethod;
   url: string;
   loading: boolean;
+  auth?: AuthConfig;
   onMethodChange: (m: HttpMethod) => void;
   onUrlChange: (url: string) => void;
   onSend: () => void;
@@ -34,12 +36,16 @@ type Props = {
  * - path (/todos/1) → white/foreground
  * - query (?key=val) → amber
  */
-function ColorizedUrl({ url }: { url: string }) {
-  if (!url) return null;
+function ColorizedUrl({ url, authSuffix }: { url: string; authSuffix?: string }) {
+  // Build the display URL — append auth query param when present
+  const displayUrl = authSuffix
+    ? url + (url.includes("?") ? "&" : "?") + authSuffix
+    : url;
+  if (!displayUrl) return null;
 
   try {
-    const hasProtocol = /^https?:\/\//i.test(url);
-    const fullUrl = hasProtocol ? url : `https://${url}`;
+    const hasProtocol = /^https?:\/\//i.test(displayUrl);
+    const fullUrl = hasProtocol ? displayUrl : `https://${displayUrl}`;
     const parsed = new URL(fullUrl);
 
     const scheme = hasProtocol ? parsed.protocol.replace(":", "") : "";
@@ -76,7 +82,7 @@ function ColorizedUrl({ url }: { url: string }) {
   }
 }
 
-export function UrlBar({ method, url, loading, onMethodChange, onUrlChange, onSend }: Props) {
+export function UrlBar({ method, url, loading, auth, onMethodChange, onUrlChange, onSend }: Props) {
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -131,7 +137,13 @@ export function UrlBar({ method, url, loading, onMethodChange, onUrlChange, onSe
         {/* Colorized display — hidden when focused so cursor is visible on plain input */}
         {!focused && url && (
           <div className="pointer-events-none absolute inset-0 flex items-center px-3 overflow-hidden whitespace-nowrap">
-            <ColorizedUrl url={url} />
+            <ColorizedUrl
+              url={url}
+              authSuffix={(() => {
+                const qp = auth ? buildAuthQueryParam(auth) : null;
+                return qp ? `${encodeURIComponent(qp.key)}=${encodeURIComponent(qp.value)}` : undefined;
+              })()}
+            />
           </div>
         )}
 

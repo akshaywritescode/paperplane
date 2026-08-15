@@ -188,6 +188,7 @@ export function RequestEditor() {
         method={activeTab.method}
         url={activeTab.url}
         loading={response.status === "loading"}
+        auth={auth}
         onMethodChange={(method) => updateTab({ method })}
         onUrlChange={(url) => updateTab({ url })}
         onSend={sendRequest}
