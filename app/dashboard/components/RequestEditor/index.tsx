@@ -11,7 +11,7 @@ import { buildAuthHeader, buildAuthQueryParam } from "./auth";
 import type { AuthConfig } from "./auth";
 import { DEFAULT_BODY, hasBodyContent } from "./body";
 import type { BodyConfig } from "./body";
-import { addHistoryEntry } from "@/lib/history";
+import { addHistoryEntryAction } from "@/app/dashboard/history/actions";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
 
@@ -99,13 +99,30 @@ export function RequestEditor() {
       if (!raw) return;
       sessionStorage.removeItem("paperplane_restore");
       const entry = JSON.parse(raw);
+      // Restore request fields
       setTabs((prev) =>
-        prev.map((t) => (t.id === activeTabId ? { ...t, method: entry.method, url: entry.url } : t)),
+        prev.map((t) =>
+          t.id === activeTabId
+            ? { ...t, method: entry.method, url: entry.url, name: entry.title || "untitled" }
+            : t,
+        ),
       );
       if (entry.params)  setParams(entry.params);
       if (entry.headers) setHeaders(entry.headers);
       if (entry.body)    setBody(entry.body);
       if (entry.auth)    setAuth(entry.auth);
+      // Restore response so the pane shows the saved result immediately
+      if (entry.response) {
+        setResponse({
+          status:     "done",
+          statusCode: entry.response.statusCode,
+          statusText: entry.response.statusText,
+          time:       entry.response.time,
+          size:       entry.response.size,
+          headers:    entry.response.headers,
+          body:       entry.response.body,
+        });
+      }
     } catch {}
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -196,13 +213,16 @@ export function RequestEditor() {
       const data = await res.json();
 
       if (!res.ok || data.error) {
-        addHistoryEntry({
-          method: activeTab.method,
-          url: activeTab.url,
+        // Fire-and-forget: never await history writes
+        addHistoryEntryAction({
+          title:   activeTab.name !== "untitled" ? activeTab.name : "",
+          method:  activeTab.method,
+          url:     activeTab.url,
           params,
           headers,
           body,
           auth,
+          source:  "editor",
         });
         setResponse({
           status: "error",
@@ -211,18 +231,23 @@ export function RequestEditor() {
         return;
       }
 
-      addHistoryEntry({
-        method: activeTab.method,
-        url: activeTab.url,
+      // Fire-and-forget history write with full response
+      addHistoryEntryAction({
+        title:   activeTab.name !== "untitled" ? activeTab.name : "",
+        method:  activeTab.method,
+        url:     activeTab.url,
         params,
         headers,
         body,
         auth,
+        source:  "editor",
         response: {
           statusCode: data.statusCode,
           statusText: data.statusText,
-          time: data.time,
-          size: data.size,
+          time:       data.time,
+          size:       data.size,
+          headers:    data.headers,
+          body:       data.body,
         },
       });
       setResponse({

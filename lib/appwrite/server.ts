@@ -1,4 +1,4 @@
-import { Account, Client, Users, Storage } from "node-appwrite";
+import { Account, Client, Users, Storage, Databases } from "node-appwrite";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -38,6 +38,7 @@ export function createAppwriteAdminClient() {
     account: new Account(client),
     users: new Users(client),
     storage: new Storage(client),
+    databases: new Databases(client),
   };
 }
 
@@ -54,6 +55,7 @@ export async function createAppwriteSessionClient() {
   return {
     account: new Account(client),
     storage: new Storage(client),
+    databases: new Databases(client),
   };
 }
 

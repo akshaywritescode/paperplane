@@ -27,10 +27,9 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRepeater } from "../context/RepeaterContext";
 import { UserMenu } from "./UserMenu";
-import { loadHistory } from "@/lib/history";
 
 const mainNav = [
   { href: "/dashboard",              label: "Overview",      icon: LayoutDashboard },
@@ -52,14 +51,6 @@ export function AppSidebar({
 }) {
   const pathname = usePathname();
   const { tabs: repeaterTabs } = useRepeater();
-  const [historyCount, setHistoryCount] = useState(0);
-
-  useEffect(() => {
-    const sync = () => setHistoryCount(loadHistory().length);
-    sync();
-    window.addEventListener("focus", sync);
-    return () => window.removeEventListener("focus", sync);
-  }, []);
 
   return (
     <Sidebar collapsible="icon">
@@ -98,9 +89,6 @@ export function AppSidebar({
                   </SidebarMenuButton>
                   {item.href === "/dashboard/repeater" && repeaterTabs.length > 0 && (
                     <SidebarMenuBadge>{repeaterTabs.length}</SidebarMenuBadge>
-                  )}
-                  {item.href === "/dashboard/history" && historyCount > 0 && (
-                    <SidebarMenuBadge>{historyCount}</SidebarMenuBadge>
                   )}
                 </SidebarMenuItem>
               ))}

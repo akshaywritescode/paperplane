@@ -11,7 +11,7 @@ import { ResponsePane } from "../components/RequestEditor/ResponsePane";
 import { buildAuthHeader, buildAuthQueryParam } from "../components/RequestEditor/auth";
 import { DEFAULT_BODY, hasBodyContent } from "../components/RequestEditor/body";
 import type { BodyConfig } from "../components/RequestEditor/body";
-import { addHistoryEntry } from "@/lib/history";
+import { addHistoryEntryAction } from "@/app/dashboard/history/actions";
 import type {
   HttpMethod,
   ParamRow,
@@ -171,13 +171,15 @@ export function RepeaterEditor() {
       const data = await res.json();
 
       if (!res.ok || data.error) {
-        addHistoryEntry({
-          method: activeTab.method,
-          url: activeTab.url,
-          params: state.params,
+        addHistoryEntryAction({
+          title:   activeTab.name !== "untitled" ? activeTab.name : "",
+          method:  activeTab.method,
+          url:     activeTab.url,
+          params:  state.params,
           headers: state.headers,
-          body: state.body,
-          auth: state.auth,
+          body:    state.body,
+          auth:    state.auth,
+          source:  "repeater",
         });
         setTabState(activeTab.id, {
           response: { status: "error", message: data.error ?? "Request failed" },
@@ -185,18 +187,22 @@ export function RepeaterEditor() {
         return;
       }
 
-      addHistoryEntry({
-        method: activeTab.method,
-        url: activeTab.url,
-        params: state.params,
+      addHistoryEntryAction({
+        title:   activeTab.name !== "untitled" ? activeTab.name : "",
+        method:  activeTab.method,
+        url:     activeTab.url,
+        params:  state.params,
         headers: state.headers,
-        body: state.body,
-        auth: state.auth,
+        body:    state.body,
+        auth:    state.auth,
+        source:  "repeater",
         response: {
           statusCode: data.statusCode,
           statusText: data.statusText,
-          time: data.time,
-          size: data.size,
+          time:       data.time,
+          size:       data.size,
+          headers:    data.headers,
+          body:       data.body,
         },
       });
       setTabState(activeTab.id, {
