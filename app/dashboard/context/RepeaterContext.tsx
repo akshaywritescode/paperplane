@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback } from "react";
-import type { HttpMethod, ParamRow, HeaderRow } from "../components/RequestEditor";
+import type { HttpMethod, ParamRow, HeaderRow, AuthConfig } from "../components/RequestEditor";
 
 export type RepeaterTab = {
   id: string;
@@ -11,6 +11,7 @@ export type RepeaterTab = {
   params: ParamRow[];
   headers: HeaderRow[];
   body: string;
+  auth: AuthConfig;
 };
 
 type RepeaterContextType = {

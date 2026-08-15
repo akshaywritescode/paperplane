@@ -8,12 +8,14 @@ import type { RepeaterTab } from "../context/RepeaterContext";
 import { UrlBar } from "../components/RequestEditor/UrlBar";
 import { RequestPane } from "../components/RequestEditor/RequestPane";
 import { ResponsePane } from "../components/RequestEditor/ResponsePane";
+import { buildAuthHeader, buildAuthQueryParam } from "../components/RequestEditor/auth";
 import type {
   HttpMethod,
   ParamRow,
   HeaderRow,
   ResponseState,
   RequestTab,
+  AuthConfig,
 } from "../components/RequestEditor";
 
 const METHOD_COLORS: Record<string, string> = {
@@ -26,11 +28,12 @@ const METHOD_COLORS: Record<string, string> = {
   OPTIONS: "text-slate-500",
 };
 
-// Per-tab response + local param/header/body state lives here
+// Per-tab response + local param/header/body/auth state lives here
 type TabState = {
   params: ParamRow[];
   headers: HeaderRow[];
   body: string;
+  auth: AuthConfig;
   response: ResponseState;
 };
 
@@ -67,6 +70,7 @@ export function RepeaterEditor() {
       params: tabs.find((t) => t.id === id)?.params ?? [],
       headers: tabs.find((t) => t.id === id)?.headers ?? [],
       body: tabs.find((t) => t.id === id)?.body ?? "",
+      auth: tabs.find((t) => t.id === id)?.auth ?? { type: "none" },
       response: { status: "idle" },
     };
   }
@@ -86,6 +90,7 @@ export function RepeaterEditor() {
       params: [],
       headers: [],
       body: "",
+      auth: { type: "none" },
     });
   }
 
@@ -119,6 +124,17 @@ export function RepeaterEditor() {
     state.headers.filter((h) => h.enabled && h.name).forEach((h) => {
       reqHeaders[h.name] = h.value;
     });
+
+    // Merge auth credentials into headers
+    Object.assign(reqHeaders, buildAuthHeader(state.auth));
+
+    // API Key → Query Param: append before the fetch
+    const authQp = buildAuthQueryParam(state.auth);
+    if (authQp) {
+      finalUrl +=
+        (finalUrl.includes("?") ? "&" : "?") +
+        `${encodeURIComponent(authQp.key)}=${encodeURIComponent(authQp.value)}`;
+    }
 
     try {
       const res = await fetch("/api/proxy", {
@@ -269,9 +285,11 @@ export function RepeaterEditor() {
               params={state.params}
               headers={state.headers}
               body={state.body}
+              auth={state.auth}
               onParamsChange={(params) => setTabState(activeTab.id, { params })}
               onHeadersChange={(headers) => setTabState(activeTab.id, { headers })}
               onBodyChange={(body) => setTabState(activeTab.id, { body })}
+              onAuthChange={(auth) => setTabState(activeTab.id, { auth })}
               onSendToRepeater={() => {
                 addTab({
                   name: activeTab.name || activeTab.url || "untitled",
@@ -280,6 +298,7 @@ export function RepeaterEditor() {
                   params: state.params,
                   headers: state.headers,
                   body: state.body,
+                  auth: state.auth,
                 });
               }}
             />

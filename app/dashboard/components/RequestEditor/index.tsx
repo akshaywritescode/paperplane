@@ -7,6 +7,8 @@ import { UrlBar } from "./UrlBar";
 import { RequestPane } from "./RequestPane";
 import { ResponsePane } from "./ResponsePane";
 import { useRepeater } from "../../context/RepeaterContext";
+import { buildAuthHeader, buildAuthQueryParam } from "./auth";
+import type { AuthConfig } from "./auth";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
 
@@ -19,6 +21,7 @@ export type RequestTab = {
 
 export type ParamRow = { id: string; enabled: boolean; name: string; value: string };
 export type HeaderRow = { id: string; enabled: boolean; name: string; value: string };
+export type { AuthConfig } from "./auth";
 
 export type ResponseState =
   | { status: "idle" }
@@ -47,6 +50,7 @@ export function RequestEditor() {
   const [params, setParams] = useState<ParamRow[]>([]);
   const [headers, setHeaders] = useState<HeaderRow[]>([]);
   const [body, setBody] = useState("");
+  const [auth, setAuth] = useState<AuthConfig>({ type: "none" });
   const [response, setResponse] = useState<ResponseState>({ status: "idle" });
   const { addTab: addRepeaterTab } = useRepeater();
   const router = useRouter();
@@ -61,6 +65,7 @@ export function RequestEditor() {
       params,
       headers,
       body,
+      auth,
     });
     router.push("/dashboard/repeater");
   }
@@ -73,6 +78,7 @@ export function RequestEditor() {
     setParams([]);
     setHeaders([]);
     setBody("");
+    setAuth({ type: "none" });
     setResponse({ status: "idle" });
   }
 
@@ -110,6 +116,17 @@ export function RequestEditor() {
     headers.filter((h) => h.enabled && h.name).forEach((h) => {
       reqHeaders[h.name] = h.value;
     });
+
+    // Merge auth credentials into headers
+    Object.assign(reqHeaders, buildAuthHeader(auth));
+
+    // API Key → Query Param: append before the fetch
+    const authQp = buildAuthQueryParam(auth);
+    if (authQp) {
+      finalUrl +=
+        (finalUrl.includes("?") ? "&" : "?") +
+        `${encodeURIComponent(authQp.key)}=${encodeURIComponent(authQp.value)}`;
+    }
 
     try {
       const res = await fetch("/api/proxy", {
@@ -184,9 +201,11 @@ export function RequestEditor() {
           params={params}
           headers={headers}
           body={body}
+          auth={auth}
           onParamsChange={setParams}
           onHeadersChange={setHeaders}
           onBodyChange={setBody}
+          onAuthChange={setAuth}
           onSendToRepeater={sendToRepeater}
         />
         <div className="w-px bg-border shrink-0" />

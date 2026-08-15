@@ -11,7 +11,8 @@ import {
   ContextMenuShortcut,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import type { HttpMethod, ParamRow, HeaderRow } from "./index";
+import type { HttpMethod, ParamRow, HeaderRow, AuthConfig } from "./index";
+import { buildAuthHeader } from "./auth";
 
 type Props = {
   method: HttpMethod;
@@ -19,9 +20,11 @@ type Props = {
   params: ParamRow[];
   headers: HeaderRow[];
   body: string;
+  auth: AuthConfig;
   onParamsChange: (rows: ParamRow[]) => void;
   onHeadersChange: (rows: HeaderRow[]) => void;
   onBodyChange: (body: string) => void;
+  onAuthChange: (auth: AuthConfig) => void;
   onSendToRepeater: () => void;
 };
 
@@ -53,6 +56,7 @@ function buildRawPreview(
   params: ParamRow[],
   headers: HeaderRow[],
   body: string,
+  auth: AuthConfig,
 ): React.ReactNode[] {
   const lines: React.ReactNode[] = [];
   let lineNum = 1;
@@ -100,6 +104,21 @@ function buildRawPreview(
       </div>,
     );
   }
+
+  // Auth header (shown before custom headers, matching real request order)
+  const authHeader = buildAuthHeader(auth);
+  Object.entries(authHeader).forEach(([k, v]) => {
+    lines.push(
+      <div key={`auth-${lineNum}`} className="flex gap-2">
+        <span className={`w-8 shrink-0 select-none text-right ${RAW_COLORS.lineNum}`}>{lineNum++}</span>
+        <span>
+          <span className={RAW_COLORS.key}>{k}</span>
+          <span className={RAW_COLORS.colon}>: </span>
+          <span className={RAW_COLORS.value}>{v}</span>
+        </span>
+      </div>,
+    );
+  });
 
   headers.filter((h) => h.enabled && h.name).forEach((h) => {
     lines.push(
@@ -226,15 +245,170 @@ function KeyValueTable({
   );
 }
 
+const AUTH_MODES = [
+  { id: "none",   label: "None"    },
+  { id: "bearer", label: "Bearer"  },
+  { id: "basic",  label: "Basic"   },
+  { id: "apikey", label: "API Key" },
+] as const;
+
+const INPUT_CLS =
+  "w-full rounded-md border bg-transparent px-3 py-2 font-mono text-xs outline-none transition " +
+  "focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 placeholder:text-muted-foreground";
+
+function AuthPanel({
+  auth,
+  onAuthChange,
+}: {
+  auth: AuthConfig;
+  onAuthChange: (a: AuthConfig) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-5 overflow-auto p-4">
+      {/* Mode selector */}
+      <div className="flex gap-1 rounded-lg bg-muted p-1">
+        {AUTH_MODES.map((m) => (
+          <button
+            key={m.id}
+            onClick={() => {
+              if (m.id === "none")   onAuthChange({ type: "none" });
+              if (m.id === "bearer") onAuthChange({ type: "bearer", token:    auth.type === "bearer" ? auth.token    : "" });
+              if (m.id === "basic")  onAuthChange({ type: "basic",  username: auth.type === "basic"  ? auth.username : "", password: auth.type === "basic" ? auth.password : "" });
+              if (m.id === "apikey") onAuthChange({ type: "apikey", key:     auth.type === "apikey" ? auth.key     : "X-API-Key", value: auth.type === "apikey" ? auth.value : "", in: auth.type === "apikey" ? auth.in : "header" });
+            }}
+            className={cn(
+              "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+              auth.type === m.id
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+
+      {/* None */}
+      {auth.type === "none" && (
+        <p className="py-6 text-center text-xs text-muted-foreground">
+          No authentication will be sent with this request.
+        </p>
+      )}
+
+      {/* Bearer Token */}
+      {auth.type === "bearer" && (
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-muted-foreground">Token</label>
+          <input
+            type="text"
+            value={auth.token}
+            onChange={(e) => onAuthChange({ ...auth, token: e.target.value })}
+            placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            className={INPUT_CLS}
+          />
+          <p className="text-[10px] text-muted-foreground">
+            Sends:{" "}
+            <code className="font-mono">Authorization: Bearer &lt;token&gt;</code>
+          </p>
+        </div>
+      )}
+
+      {/* Basic Auth */}
+      {auth.type === "basic" && (
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-muted-foreground">Username</label>
+            <input
+              type="text"
+              value={auth.username}
+              onChange={(e) => onAuthChange({ ...auth, username: e.target.value })}
+              placeholder="username"
+              className={INPUT_CLS}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-muted-foreground">Password</label>
+            <input
+              type="password"
+              value={auth.password}
+              onChange={(e) => onAuthChange({ ...auth, password: e.target.value })}
+              placeholder="••••••••"
+              className={INPUT_CLS}
+            />
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Sends:{" "}
+            <code className="font-mono">Authorization: Basic &lt;base64(user:pass)&gt;</code>
+          </p>
+        </div>
+      )}
+
+      {/* API Key */}
+      {auth.type === "apikey" && (
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-muted-foreground">Key name</label>
+            <input
+              type="text"
+              value={auth.key}
+              onChange={(e) => onAuthChange({ ...auth, key: e.target.value })}
+              placeholder="X-API-Key"
+              className={INPUT_CLS}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-muted-foreground">Value</label>
+            <input
+              type="text"
+              value={auth.value}
+              onChange={(e) => onAuthChange({ ...auth, value: e.target.value })}
+              placeholder="your-api-key-here"
+              className={INPUT_CLS}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-muted-foreground">Send via</label>
+            <div className="flex gap-2">
+              {(["header", "query"] as const).map((loc) => (
+                <button
+                  key={loc}
+                  onClick={() => onAuthChange({ ...auth, in: loc })}
+                  className={cn(
+                    "rounded-md border px-3 py-1.5 text-xs font-medium transition-colors",
+                    auth.in === loc
+                      ? "border-orange-400 bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
+                      : "border-border text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {loc === "header" ? "Header" : "Query Param"}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              {auth.in === "header" ? (
+                <>Sends: <code className="font-mono">{auth.key || "X-API-Key"}: &lt;value&gt;</code></>
+              ) : (
+                <>Appends: <code className="font-mono">?{auth.key || "key"}=&lt;value&gt;</code></>
+              )}
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function RequestPane({
   method,
   url,
   params,
   headers,
   body,
+  auth,
   onParamsChange,
   onHeadersChange,
   onBodyChange,
+  onAuthChange,
   onSendToRepeater,
 }: Props) {
   const [tab, setTab] = useState<Tab>("raw");
@@ -286,6 +460,9 @@ export function RequestPane({
                   {headers.filter((h) => h.name).length}
                 </span>
               )}
+              {t.id === "auth" && auth.type !== "none" && (
+                <span className="ml-1.5 inline-block size-1.5 rounded-full bg-orange-500 align-middle" />
+              )}
             </button>
           ))}
         </div>
@@ -296,7 +473,7 @@ export function RequestPane({
             <div className="h-full overflow-auto bg-background">
               <pre className="p-4 font-mono text-xs leading-[1.6]">
                 {url ? (
-                  buildRawPreview(method, url, params, headers, body)
+                  buildRawPreview(method, url, params, headers, body, auth)
                 ) : (
                   <div className="flex gap-2">
                     <span className={`w-8 shrink-0 select-none text-right ${RAW_COLORS.lineNum}`}>1</span>
@@ -321,9 +498,7 @@ export function RequestPane({
             />
           )}
           {tab === "auth" && (
-            <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
-              <p className="text-sm">Auth configuration coming soon</p>
-            </div>
+            <AuthPanel auth={auth} onAuthChange={onAuthChange} />
           )}
           {tab === "body" && (
             <textarea
