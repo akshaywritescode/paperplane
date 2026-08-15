@@ -1,6 +1,7 @@
 import { griffy } from "@/app/font";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import Image from "next/image";
 import Link from "next/link";
@@ -35,27 +36,27 @@ export default async function ResetPasswordPage({
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 p-4 sm:p-6 lg:p-8">
+    <main className="flex min-h-screen items-center justify-center bg-muted p-4 sm:p-6 lg:p-8">
       <Card className="w-full max-w-md overflow-hidden ring-0 shadow-[0_24px_64px_rgba(15,23,42,0.12)] rounded-2xl p-0 gap-0">
         <CardContent className="px-8 py-10 sm:px-10 sm:py-12">
           {/* Logo */}
           <Link href="/" className="inline-flex items-center gap-2 mb-10">
             <Image
-              src="/logos/paperplane-logo.png"
+              src="/logos/paperplane-logo-removebg-preview.png" className="logo-img"
               width={36}
               height={36}
               alt="Paperplane logo"
               unoptimized
             />
-            <span className={`${griffy.className} text-xl text-slate-900`}>
+            <span className={`${griffy.className} text-xl text-foreground`}>
               Paperplane
             </span>
           </Link>
 
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Set a new password
           </h1>
-          <p className="mt-1.5 text-sm text-slate-500">
+          <p className="mt-1.5 text-sm text-muted-foreground">
             Must be at least 8 characters.
           </p>
 
@@ -77,7 +78,7 @@ export default async function ResetPasswordPage({
             <div className="space-y-1.5">
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-slate-700"
+                className="block text-sm font-medium text-foreground"
               >
                 New password
               </label>
@@ -93,7 +94,7 @@ export default async function ResetPasswordPage({
             <div className="space-y-1.5">
               <label
                 htmlFor="confirmPassword"
-                className="block text-sm font-medium text-slate-700"
+                className="block text-sm font-medium text-foreground"
               >
                 Confirm new password
               </label>

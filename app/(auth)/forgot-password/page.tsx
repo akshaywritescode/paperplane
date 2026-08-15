@@ -1,6 +1,7 @@
 import { griffy } from "@/app/font";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -25,27 +26,27 @@ export default async function ForgotPasswordPage({
   const params = await searchParams;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 p-4 sm:p-6 lg:p-8">
+    <main className="flex min-h-screen items-center justify-center bg-muted p-4 sm:p-6 lg:p-8">
       <Card className="w-full max-w-md overflow-hidden ring-0 shadow-[0_24px_64px_rgba(15,23,42,0.12)] rounded-2xl p-0 gap-0">
         <CardContent className="px-8 py-10 sm:px-10 sm:py-12">
           {/* Logo */}
           <Link href="/" className="inline-flex items-center gap-2 mb-10">
             <Image
-              src="/logos/paperplane-logo.png"
+              src="/logos/paperplane-logo-removebg-preview.png" className="logo-img"
               width={36}
               height={36}
               alt="Paperplane logo"
               unoptimized
             />
-            <span className={`${griffy.className} text-xl text-slate-900`}>
+            <span className={`${griffy.className} text-xl text-foreground`}>
               Paperplane
             </span>
           </Link>
 
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Forgot your password?
           </h1>
-          <p className="mt-1.5 text-sm text-slate-500">
+          <p className="mt-1.5 text-sm text-muted-foreground">
             Enter your email and we&apos;ll send you a reset link.
           </p>
 
@@ -71,17 +72,16 @@ export default async function ForgotPasswordPage({
             <div className="space-y-1.5">
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-slate-700"
+                className="block text-sm font-medium text-foreground"
               >
                 Email address
               </label>
-              <input
+              <Input
                 id="email"
                 name="email"
                 type="email"
                 required
                 placeholder="jane@company.com"
-                className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
               />
             </div>
 
@@ -96,7 +96,7 @@ export default async function ForgotPasswordPage({
 
           <Link
             href="/login"
-            className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
+            className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="size-4" />
             Back to log in

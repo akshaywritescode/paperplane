@@ -137,3 +137,16 @@
     transform: translateX(-50%);
   }
 }
+
+
+
+.logo-img {
+  /* orange in light mode: black → sepia → saturate to orange */
+  filter: brightness(0) sepia(1) saturate(500%) hue-rotate(355deg);
+  transition: filter 0.3s ease;
+}
+
+.dark .logo-img {
+  /* white in dark mode */
+  filter: brightness(0) invert(1);
+}

@@ -72,7 +72,7 @@ export default function Footer() {
               <div>
                 <Link href="/" className="inline-flex items-center gap-2">
                   <Image
-                    src="/logos/paperplane-logo.png"
+                    src="/logos/paperplane-logo-removebg-preview.png" className="logo-img"
                     width={42}
                     height={42}
                     alt="Paperplane logo"

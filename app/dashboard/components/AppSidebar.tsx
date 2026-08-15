@@ -57,7 +57,7 @@ export function AppSidebar({
       <SidebarHeader className="px-4 py-4 border-b border-sidebar-border">
         <Link href="/" className="inline-flex items-center gap-2">
           <Image
-            src="/logos/paperplane-logo.png"
+            src="/logos/paperplane-logo-removebg-preview.png" className="logo-img"
             width={30}
             height={30}
             alt="Paperplane logo"

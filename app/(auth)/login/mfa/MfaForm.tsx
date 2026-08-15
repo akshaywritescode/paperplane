@@ -47,7 +47,7 @@ export function MfaForm({ error: initialError }: Props) {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 p-4 sm:p-6 lg:p-8">
+    <main className="flex min-h-screen items-center justify-center bg-muted p-4 sm:p-6 lg:p-8">
       <Card className="w-full max-w-5xl overflow-hidden ring-0 shadow-[0_24px_64px_rgba(15,23,42,0.12)] rounded-2xl p-0 gap-0">
         <div className="grid lg:grid-cols-2">
 
@@ -57,13 +57,13 @@ export function MfaForm({ error: initialError }: Props) {
               {/* Logo */}
               <Link href="/" className="inline-flex items-center gap-2 mb-10">
                 <Image
-                  src="/logos/paperplane-logo.png"
+                  src="/logos/paperplane-logo-removebg-preview.png" className="logo-img"
                   width={36}
                   height={36}
                   alt="Paperplane logo"
                   unoptimized
                 />
-                <span className={`${griffy.className} text-xl text-slate-900`}>
+                <span className={`${griffy.className} text-xl text-foreground`}>
                   Paperplane
                 </span>
               </Link>
@@ -73,10 +73,10 @@ export function MfaForm({ error: initialError }: Props) {
                 <Shield className="size-6 text-orange-600" />
               </div>
 
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
                 Two-factor authentication
               </h1>
-              <p className="mt-1.5 text-sm text-slate-500">
+              <p className="mt-1.5 text-sm text-muted-foreground">
                 Enter the 6-digit code from your authenticator app.
               </p>
 
@@ -84,7 +84,7 @@ export function MfaForm({ error: initialError }: Props) {
               {error && (
                 <div
                   role="alert"
-                  className="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                  className="mt-5 rounded-lg border border-destructive/50 bg-destructive/5 px-4 py-3 text-sm text-destructive dark:border-destructive dark:bg-destructive/10"
                 >
                   {error}
                 </div>
@@ -104,13 +104,13 @@ export function MfaForm({ error: initialError }: Props) {
                       <InputOTPSlot
                         key={i}
                         index={i}
-                        className="size-12 rounded-lg border-slate-200 text-base font-semibold first:rounded-lg first:border last:rounded-lg last:border data-[active=true]:border-orange-500 data-[active=true]:ring-2 data-[active=true]:ring-orange-500/20"
+                        className="size-12 rounded-lg border-input text-base font-semibold first:rounded-lg first:border last:rounded-lg last:border data-[active=true]:border-ring data-[active=true]:ring-2 data-[active=true]:ring-ring/50"
                       />
                     ))}
                   </InputOTPGroup>
                 </InputOTP>
 
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-muted-foreground">
                   Code refreshes every 30 seconds. Ensure your device clock is synced.
                 </p>
 
@@ -131,7 +131,7 @@ export function MfaForm({ error: initialError }: Props) {
             <form action={cancelMfaLogin} className="mt-8 text-center">
               <button
                 type="submit"
-                className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft className="size-3.5" />
                 Back to log in

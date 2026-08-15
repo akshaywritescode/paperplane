@@ -27,14 +27,14 @@ export default function Header() {
   return (
     <header className="absolute inset-x-0 top-0 z-20 w-full py-5 px-4 flex justify-center">
       <div className="relative w-full max-w-5xl">
-        <nav className="flex min-h-15 w-full items-center justify-between rounded-xl bg-white px-4 shadow-sm sm:px-6 lg:px-7">
+        <nav className="flex min-h-15 w-full items-center justify-between rounded-xl bg-background px-4 shadow-sm sm:px-6 lg:px-7">
           <Link
             href="/"
             className="flex items-center gap-2"
             onClick={() => setIsOpen(false)}
           >
             <Image
-              src="/logos/paperplane-logo.png"
+              src="/logos/paperplane-logo-removebg-preview.png" className="logo-img"
               width={50}
               height={50}
               alt="Paperplane logo"
@@ -50,8 +50,8 @@ export default function Header() {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`rounded-lg p-2 transition-colors duration-150 hover:bg-black/5 ${
-                    isActive(item.href) ? "bg-black/5" : ""
+                  className={`rounded-lg p-2 transition-colors duration-150 hover:bg-muted ${
+                    isActive(item.href) ? "bg-muted" : ""
                   }`}
                 >
                   {item.label}
@@ -89,14 +89,14 @@ export default function Header() {
         </nav>
 
         {isOpen ? (
-          <div className="absolute left-0 right-0 top-full mt-3 rounded-xl border border-white/80 bg-white p-3 shadow-[0_18px_55px_rgba(15,23,42,0.16)] md:hidden">
+          <div className="absolute left-0 right-0 top-full mt-3 rounded-xl border border-border bg-background p-3 shadow-[0_18px_55px_rgba(15,23,42,0.16)] md:hidden">
             <ul className="space-y-1 text-sm font-medium">
               {navItems.map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`block rounded-lg px-3 py-2.5 transition-colors duration-150 hover:bg-black/5 ${
-                      isActive(item.href) ? "bg-black/5" : ""
+                    className={`block rounded-lg px-3 py-2.5 transition-colors duration-150 hover:bg-muted ${
+                      isActive(item.href) ? "bg-muted" : ""
                     }`}
                     onClick={() => setIsOpen(false)}
                   >
@@ -106,7 +106,7 @@ export default function Header() {
               ))}
             </ul>
 
-            <div className="mt-3 grid grid-cols-1 gap-2 border-t border-slate-100 pt-3 min-[420px]:grid-cols-2">
+            <div className="mt-3 grid grid-cols-1 gap-2 border-t border-border pt-3 min-[420px]:grid-cols-2">
               <Link
                 href="/signup"
                 className="inline-flex h-10 items-center justify-center rounded-lg bg-orange-600 px-3 text-sm font-medium text-white hover:bg-orange-700"

@@ -24,11 +24,11 @@ export default function Hero() {
       />
       <div className="mx-auto flex max-w-5xl -translate-y-10 flex-col items-center sm:-translate-y-14">
         <div className="mb-8 rounded-full border border-white/80 bg-white/45 p-1 shadow-sm">
-          <p className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-600">
-            <Image
-              src="/logos/paperplane-logo.png"
-              width={18}
-              height={18}
+          <p className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-xs font-medium text-slate-900">
+            <Image className="logo-img" 
+              src="/logos/paperplane-logo-removebg-preview.png" 
+              width={20}
+              height={20}
               alt=""
               unoptimized
             />
@@ -42,7 +42,7 @@ export default function Hero() {
           Let your API take flight
         </h1>
 
-        <p className="mt-6 max-w-xl text-pretty text-xs font-medium leading-7 text-slate-700 sm:text-sm">
+        <p className="mt-6 max-w-xl text-pretty text-xs font-medium leading-6 text-slate-500 sm:text-sm">
           Compose requests, inspect responses, and organize API workflows in a
           calm workspace built for modern teams.
         </p>

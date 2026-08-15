@@ -2,6 +2,7 @@ import { getCurrentAppwriteUser } from "@/lib/appwrite/server";
 import { griffy } from "@/app/font";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -39,7 +40,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
   const params = await searchParams;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 p-4 sm:p-6 lg:p-8">
+    <main className="flex min-h-screen items-center justify-center bg-muted p-4 sm:p-6 lg:p-8">
       <Card className="w-full max-w-5xl overflow-hidden ring-0 shadow-[0_24px_64px_rgba(15,23,42,0.12)] rounded-2xl p-0 gap-0">
         <div className="grid lg:grid-cols-2">
 
@@ -49,21 +50,21 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
               {/* Logo */}
               <Link href="/" className="inline-flex items-center gap-2 mb-10">
                 <Image
-                  src="/logos/paperplane-logo.png"
+                  src="/logos/paperplane-logo-removebg-preview.png" className="logo-img"
                   width={36}
                   height={36}
                   alt="Paperplane logo"
                   unoptimized
                 />
-                <span className={`${griffy.className} text-xl text-slate-900`}>
+                <span className={`${griffy.className} text-xl text-foreground`}>
                   Paperplane
                 </span>
               </Link>
 
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
                 Create your account
               </h1>
-              <p className="mt-1.5 text-sm text-slate-500">
+              <p className="mt-1.5 text-sm text-muted-foreground">
                 Sign up to start testing APIs with Paperplane.
               </p>
 
@@ -73,7 +74,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                   <input type="hidden" name="provider" value="google" />
                   <button
                     type="submit"
-                    className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+                    className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
                   >
                     {/* Google "G" logo */}
                     <svg viewBox="0 0 24 24" className="size-4 shrink-0" aria-hidden="true">
@@ -90,10 +91,10 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                   <input type="hidden" name="provider" value="github" />
                   <button
                     type="submit"
-                    className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+                    className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
                   >
                     {/* GitHub mark */}
-                    <svg viewBox="0 0 24 24" className="size-4 shrink-0 fill-slate-900" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" className="size-4 shrink-0 fill-foreground" aria-hidden="true">
                       <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.089-.745.083-.729.083-.729 1.205.084 1.84 1.236 1.84 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.418-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
                     </svg>
                     Log in with GitHub
@@ -103,9 +104,9 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
 
               {/* Divider */}
               <div className="relative my-6 flex items-center">
-                <div className="flex-1 border-t border-slate-200" />
-                <span className="mx-4 text-xs font-medium text-slate-400">or</span>
-                <div className="flex-1 border-t border-slate-200" />
+                <div className="flex-1 border-t border-border" />
+                <span className="mx-4 text-xs font-medium text-muted-foreground">or</span>
+                <div className="flex-1 border-t border-border" />
               </div>
 
               {/* Alerts */}
@@ -131,41 +132,41 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                 <div className="space-y-1.5">
                   <label
                     htmlFor="name"
-                    className="block text-sm font-medium text-slate-700"
+                    className="block text-sm font-medium text-foreground"
                   >
                     Full name
                   </label>
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    required
-                    placeholder="Jane Smith"
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
-                  />
+                  <Input
+  id="name"
+  name="name"
+  type="text"
+  required
+  placeholder="Jane Smith"
+  className="px-3.5 py-2.5 text-sm"
+/>
                 </div>
 
                 <div className="space-y-1.5">
                   <label
                     htmlFor="email"
-                    className="block text-sm font-medium text-slate-700"
+                    className="block text-sm font-medium text-foreground"
                   >
                     Email address
                   </label>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    placeholder="jane@company.com"
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
-                  />
+                  <Input
+  id="email"
+  name="email"
+  type="email"
+  required
+  placeholder="jane@company.com"
+  className="px-3.5 py-2.5 text-sm"
+/>
                 </div>
 
                 <div className="space-y-1.5">
                   <label
                     htmlFor="password"
-                    className="block text-sm font-medium text-slate-700"
+                    className="block text-sm font-medium text-foreground"
                   >
                     Password
                   </label>
@@ -188,7 +189,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
               </form>
             </div>
 
-            <p className="mt-8 text-center text-sm text-slate-500">
+            <p className="mt-8 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
               <Link
                 href="/login"
