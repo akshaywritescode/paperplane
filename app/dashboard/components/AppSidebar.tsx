@@ -29,6 +29,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useRepeater } from "../context/RepeaterContext";
+import { useEnvironment } from "../context/EnvironmentContext";
 import { UserMenu } from "./UserMenu";
 
 const mainNav = [
@@ -51,6 +52,7 @@ export function AppSidebar({
 }) {
   const pathname = usePathname();
   const { tabs: repeaterTabs } = useRepeater();
+  const { activeEnvName } = useEnvironment();
 
   return (
     <Sidebar collapsible="icon">
@@ -118,8 +120,14 @@ export function AppSidebar({
         </SidebarGroup>
       </SidebarContent>
 
-      {/* ── Footer: user ── */}
+      {/* ── Footer: active env + user ── */}
       <SidebarFooter className="px-2 py-3 border-t border-sidebar-border">
+        {activeEnvName && (
+          <div className="mb-2 flex items-center gap-1.5 rounded-md bg-orange-50 px-2.5 py-1.5 text-[10px] font-medium text-orange-700 dark:bg-orange-950/30 dark:text-orange-400 group-data-[collapsible=icon]:hidden">
+            <span className="size-1.5 shrink-0 rounded-full bg-orange-500" />
+            <span className="truncate">{activeEnvName}</span>
+          </div>
+        )}
         <UserMenu name={user.name} email={user.email} />
       </SidebarFooter>
       <SidebarRail />

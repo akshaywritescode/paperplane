@@ -19,6 +19,7 @@ import {
 } from "@/app/dashboard/collections/actions";
 import type { Collection } from "@/lib/collections";
 import { BookmarkPlus, X, Loader2, FolderPlus } from "lucide-react";
+import { useEnvironment } from "../../context/EnvironmentContext";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
 
@@ -332,25 +333,27 @@ export function RequestEditor() {
     );
   }
 
+  const { interpolate } = useEnvironment();
+
   async function sendRequest() {
-    const url = activeTab.url.trim();
+    const url = interpolate(activeTab.url.trim());
     if (!url) return;
 
     setResponse({ status: "loading" });
 
-    // Build query string from enabled params
+    // Build query string from enabled params (with interpolation)
     let finalUrl = url;
     const enabledParams = params.filter((p) => p.enabled && p.name);
     if (enabledParams.length) {
       const qs = enabledParams
-        .map((p) => `${encodeURIComponent(p.name)}=${encodeURIComponent(p.value)}`)
+        .map((p) => `${encodeURIComponent(interpolate(p.name))}=${encodeURIComponent(interpolate(p.value))}`)
         .join("&");
       finalUrl += (url.includes("?") ? "&" : "?") + qs;
     }
 
     const reqHeaders: Record<string, string> = {};
     headers.filter((h) => h.enabled && h.name).forEach((h) => {
-      reqHeaders[h.name] = h.value;
+      reqHeaders[interpolate(h.name)] = interpolate(h.value);
     });
 
     // Merge auth credentials into headers
@@ -372,7 +375,12 @@ export function RequestEditor() {
           url: finalUrl,
           method: activeTab.method,
           headers: reqHeaders,
-          ...buildBodyPayload(body, activeTab.method),
+          ...buildBodyPayload(
+            body.type === "raw"
+              ? { ...body, content: interpolate(body.content) }
+              : body,
+            activeTab.method,
+          ),
         }),
       });
 

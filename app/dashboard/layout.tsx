@@ -8,6 +8,7 @@ import {
 import { AppSidebar } from "./components/AppSidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RepeaterProvider } from "./context/RepeaterContext";
+import { EnvironmentProvider } from "./context/EnvironmentContext";
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
 
@@ -33,6 +34,7 @@ export default async function DashboardLayout({
   }
 
   return (
+    <EnvironmentProvider>
     <RepeaterProvider>
     <div className="flex h-svh w-full overflow-hidden">
       <SidebarProvider style={{ "--sidebar-width": "13rem" } as React.CSSProperties}>
@@ -55,5 +57,6 @@ export default async function DashboardLayout({
     </div>
     <Toaster position="bottom-right" richColors />
     </RepeaterProvider>
+    </EnvironmentProvider>
   );
 }
