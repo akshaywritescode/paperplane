@@ -12,7 +12,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import type { HttpMethod, ParamRow, HeaderRow, AuthConfig } from "./index";
-import { buildAuthHeader } from "./auth";
+import { buildAuthHeader, buildAuthQueryParam } from "./auth";
 
 type Props = {
   method: HttpMethod;
@@ -78,6 +78,12 @@ function buildRawPreview(
       .map((p) => `${encodeURIComponent(p.name)}=${encodeURIComponent(p.value)}`)
       .join("&");
     path += (path.includes("?") ? "&" : "?") + qs;
+  }
+
+  // Also show API Key query param in the URL line so Raw reflects what gets sent
+  const authQp = buildAuthQueryParam(auth);
+  if (authQp) {
+    path += (path.includes("?") ? "&" : "?") + `${encodeURIComponent(authQp.key)}=${encodeURIComponent(authQp.value)}`;
   }
 
   lines.push(
