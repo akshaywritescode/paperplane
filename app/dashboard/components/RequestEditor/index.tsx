@@ -110,6 +110,15 @@ function buildBodyPayload(body: BodyConfig, method: HttpMethod) {
         ),
     };
   }
+  if (body.type === "graphql") {
+    let variables: Record<string, unknown> | undefined;
+    try { variables = JSON.parse(body.variables); } catch { /* ignore */ }
+    return {
+      bodyType: "raw",
+      rawBody: JSON.stringify({ query: body.query, ...(variables ? { variables } : {}) }),
+      rawContentType: "application/json",
+    };
+  }
   return {};
 }
 

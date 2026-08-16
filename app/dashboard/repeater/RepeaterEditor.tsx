@@ -152,6 +152,12 @@ export function RepeaterEditor() {
       } else if (b.type === "multipart") {
         bodyPayload.bodyType = "multipart";
         bodyPayload.multipartFields = b.fields.filter((f) => f.enabled && f.name);
+      } else if (b.type === "graphql") {
+        let variables: Record<string, unknown> | undefined;
+        try { variables = JSON.parse(b.variables); } catch { /* ignore */ }
+        bodyPayload.bodyType = "raw";
+        bodyPayload.rawBody = JSON.stringify({ query: b.query, ...(variables ? { variables } : {}) });
+        bodyPayload.rawContentType = "application/json";
       }
     }
 

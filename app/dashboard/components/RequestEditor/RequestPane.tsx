@@ -357,6 +357,7 @@ const BODY_MODES = [
   { id: "raw",        label: "Raw"       },
   { id: "form",       label: "Form"      },
   { id: "multipart",  label: "Multipart" },
+  { id: "graphql",    label: "GraphQL"   },
 ] as const;
 
 type BodyLang = "json" | "html" | "xml" | "text" | "javascript";
@@ -400,6 +401,7 @@ function BodyPanel({
     if (mode === "raw")       onBodyChange(DEFAULT_BODY);
     if (mode === "form")      onBodyChange({ type: "form",      fields: [newFormField()] });
     if (mode === "multipart") onBodyChange({ type: "multipart", fields: [newMultipartField()] });
+    if (mode === "graphql")   onBodyChange({ type: "graphql",   query: "", variables: "" });
   }
 
   return (
@@ -664,6 +666,40 @@ function BodyPanel({
           >
             <Plus className="size-3" /> Add field
           </button>
+        </div>
+      )}
+
+      {/* GraphQL */}
+      {body.type === "graphql" && (
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {/* Query editor — top half */}
+          <div className="flex flex-col" style={{ flex: "3" }}>
+            <div className="flex shrink-0 items-center border-b bg-muted/30 px-3 py-1">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Query</span>
+            </div>
+            <SyntaxTextarea
+              value={body.query}
+              lang="text"
+              placeholder={"query {\n  users {\n    id\n    name\n  }\n}"}
+              onChange={(query) => onBodyChange({ ...body, query })}
+            />
+          </div>
+
+          <div className="shrink-0 border-t" />
+
+          {/* Variables editor — bottom half */}
+          <div className="flex flex-col overflow-hidden" style={{ flex: "2" }}>
+            <div className="flex shrink-0 items-center border-b bg-muted/30 px-3 py-1">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Variables</span>
+              <span className="ml-2 text-[10px] text-muted-foreground/60">JSON</span>
+            </div>
+            <SyntaxTextarea
+              value={body.variables}
+              lang="json"
+              placeholder={'{\n  "id": 1\n}'}
+              onChange={(variables) => onBodyChange({ ...body, variables })}
+            />
+          </div>
         </div>
       )}
     </div>

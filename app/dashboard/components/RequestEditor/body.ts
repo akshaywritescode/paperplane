@@ -32,7 +32,8 @@ export type MultipartField =
 export type BodyConfig =
   | { type: "raw"; contentType: RawContentType; content: string }
   | { type: "form"; fields: FormField[] }
-  | { type: "multipart"; fields: MultipartField[] };
+  | { type: "multipart"; fields: MultipartField[] }
+  | { type: "graphql"; query: string; variables: string };
 
 export const DEFAULT_BODY: BodyConfig = {
   type: "raw",
@@ -42,8 +43,9 @@ export const DEFAULT_BODY: BodyConfig = {
 
 /** Returns true when the body has any actual content to send. */
 export function hasBodyContent(body: BodyConfig): boolean {
-  if (body.type === "raw") return body.content.trim().length > 0;
-  if (body.type === "form") return body.fields.some((f) => f.enabled && f.name);
+  if (body.type === "raw")      return body.content.trim().length > 0;
+  if (body.type === "form")     return body.fields.some((f) => f.enabled && f.name);
   if (body.type === "multipart") return body.fields.some((f) => f.enabled && f.name);
+  if (body.type === "graphql")  return body.query.trim().length > 0;
   return false;
 }
