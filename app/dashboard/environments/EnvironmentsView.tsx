@@ -66,7 +66,7 @@ function VarRow({
       {/* Delete */}
       <button
         onClick={onDelete}
-        className="flex items-center justify-center py-2 text-transparent group-hover:text-muted-foreground hover:!text-destructive transition"
+        className="flex items-center justify-center py-2 text-transparent group-hover:text-muted-foreground hover:text-destructive! transition"
       >
         <X className="size-3" />
       </button>
