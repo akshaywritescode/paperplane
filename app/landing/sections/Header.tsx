@@ -21,7 +21,8 @@ export default function Header() {
 
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
-    return pathname.startsWith(href.replace(/#.*$/, "")) && href.startsWith(pathname);
+    if (href.includes("#")) return false;
+    return pathname === href;
   }
 
   return (
@@ -50,8 +51,8 @@ export default function Header() {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`rounded-lg p-2 transition-colors duration-150 hover:bg-muted ${
-                    isActive(item.href) ? "bg-muted" : ""
+                  className={`p-2 transition-colors duration-150 hover:text-orange-600 ${
+                    isActive(item.href) ? "text-orange-600" : "text-foreground"
                   }`}
                 >
                   {item.label}
@@ -95,8 +96,8 @@ export default function Header() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`block rounded-lg px-3 py-2.5 transition-colors duration-150 hover:bg-muted ${
-                      isActive(item.href) ? "bg-muted" : ""
+                    className={`block px-3 py-2.5 transition-colors duration-150 hover:text-orange-600 ${
+                      isActive(item.href) ? "text-orange-600" : "text-foreground"
                     }`}
                     onClick={() => setIsOpen(false)}
                   >
