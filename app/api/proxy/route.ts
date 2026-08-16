@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     const fetchOptions: RequestInit = {
       method: method ?? "GET",
       headers: reqHeaders,
-      redirect: "follow",
+      redirect: "manual", // Track redirects manually
     };
 
     if (METHODS_WITH_BODY.includes(method)) {
@@ -140,10 +140,72 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const res = await fetch(url, fetchOptions);
-    const time = Date.now() - start;
+    // Track redirect chain manually
+    const MAX_REDIRECTS = 20;
+    const redirectChain: Array<{
+      statusCode: number;
+      statusText: string;
+      location: string;
+      headers: Record<string, string>;
+    }> = [];
 
-    const responseBody = await res.text();
+    let currentUrl = url;
+    let redirectCount = 0;
+    let finalResponse: Response | null = null;
+
+    // Follow redirects manually
+    while (redirectCount < MAX_REDIRECTS) {
+      const res = await fetch(currentUrl, {
+        ...fetchOptions,
+        // Only include body on first request (redirects typically don't include body)
+        body: redirectCount === 0 ? fetchOptions.body : undefined,
+      });
+
+      // Check if this is a redirect response
+      const isRedirect = res.status >= 300 && res.status < 400;
+      const location = res.headers.get("location");
+
+      if (isRedirect && location) {
+        // Capture redirect hop
+        const redirectHeaders: Record<string, string> = {};
+        res.headers.forEach((v, k) => {
+          if (k.toLowerCase() !== "set-cookie") {
+            redirectHeaders[k] = v;
+          }
+        });
+
+        redirectChain.push({
+          statusCode: res.status,
+          statusText: res.statusText,
+          location,
+          headers: redirectHeaders,
+        });
+
+        // Resolve relative URLs
+        currentUrl = new URL(location, currentUrl).toString();
+        redirectCount++;
+
+        // For 303 See Other, always use GET for the next request
+        if (res.status === 303) {
+          fetchOptions.method = "GET";
+          delete fetchOptions.body;
+        }
+        // For 301/302, most browsers change POST to GET (though spec says otherwise)
+        // For 307/308, preserve method and body
+      } else {
+        // Not a redirect, this is the final response
+        finalResponse = res;
+        break;
+      }
+    }
+
+    // If we hit max redirects without a final response, use the last redirect response
+    if (!finalResponse) {
+      finalResponse = await fetch(currentUrl, fetchOptions);
+    }
+
+    const time = Date.now() - start;
+    const responseBody = await finalResponse.text();
 
     // Forward response headers and extract cookies
     const responseHeaders: Record<string, string> = {};
@@ -159,7 +221,7 @@ export async function POST(request: NextRequest) {
       sameSite?: string;
     }> = [];
 
-    res.headers.forEach((v, k) => {
+    finalResponse.headers.forEach((v, k) => {
       const keyLower = k.toLowerCase();
       if (keyLower === "set-cookie") {
         // Parse set-cookie header
@@ -171,13 +233,14 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({
-      statusCode: res.status,
-      statusText: res.statusText,
+      statusCode: finalResponse.status,
+      statusText: finalResponse.statusText,
       headers: responseHeaders,
       cookies,
       body: responseBody,
       time,
       size: new Blob([responseBody]).size,
+      redirects: redirectChain.length > 0 ? redirectChain : undefined,
     });
   } catch (error) {
     return NextResponse.json(

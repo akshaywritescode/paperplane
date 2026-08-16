@@ -35,6 +35,12 @@ export type HistoryEntry = {
       secure?: boolean;
       sameSite?: string;
     }>;
+    redirects?: Array<{
+      statusCode: number;
+      statusText: string;
+      location: string;
+      headers: Record<string, string>;
+    }>;
     body: string;            // Full response body (capped at 500 KB server-side)
   };
 };

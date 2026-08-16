@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FileText, Loader2, AlertCircle, MoreVertical, Copy, ListFilter, Download, Trash2, ChevronsUpDown, Check, WrapText, Cookie } from "lucide-react";
+import { FileText, Loader2, AlertCircle, MoreVertical, Copy, ListFilter, Download, Trash2, ChevronsUpDown, Check, WrapText, Cookie, ArrowRight } from "lucide-react";
 import { SiCss, SiHtml5, SiJavascript, SiJson, SiXml } from "@icons-pack/react-simple-icons";
 import { cn } from "@/lib/utils";
 import { CodeBlock, detectLang } from "./CodeBlock";
@@ -39,7 +39,7 @@ const LANGS: { value: Lang; label: string }[] = [
   { value: "text",       label: "Text"       },
 ];
 
-type Tab = "response" | "headers" | "cookies";
+type Tab = "response" | "headers" | "cookies" | "redirects";
 
 const STATUS_COLORS: Record<string, string> = {
   "1": "text-slate-500 bg-slate-100",
@@ -122,6 +122,11 @@ export function ResponsePane({ response, onClear, url = "" }: { response: Respon
         .map((c) => `${c.name}=${c.value}`)
         .join("\n");
     }
+    if (tab === "redirects") {
+      return response.redirects
+        ?.map((r) => `${r.statusCode} ${r.statusText} → ${r.location}`)
+        .join("\n") || "";
+    }
     return "";
   }
 
@@ -142,7 +147,9 @@ export function ResponsePane({ response, onClear, url = "" }: { response: Respon
           <span className="text-xs text-muted-foreground">{formatSize(response.size)}</span>
 
           <div className="ml-auto flex items-center">
-            {(["response", "headers", "cookies"] as Tab[]).map((t) => (
+            {(["response", "headers", "cookies", "redirects"] as Tab[])
+              .filter((t) => t !== "redirects" || (response.redirects && response.redirects.length > 0))
+              .map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -154,6 +161,11 @@ export function ResponsePane({ response, onClear, url = "" }: { response: Respon
                 )}
               >
                 {t}
+                {t === "redirects" && response.redirects && (
+                  <span className="ml-1.5 rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-700 dark:bg-orange-950/40 dark:text-orange-400">
+                    {response.redirects.length}
+                  </span>
+                )}
               </button>
             ))}
 
@@ -412,6 +424,111 @@ export function ResponsePane({ response, onClear, url = "" }: { response: Respon
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {response.status === "done" && tab === "redirects" && (
+          <div className="flex-1 overflow-auto">
+            <div className="p-4">
+              <div className="mb-4 text-xs text-muted-foreground">
+                This request followed <span className="font-semibold text-foreground">{response.redirects?.length || 0}</span> redirect{response.redirects && response.redirects.length !== 1 ? 's' : ''} before reaching the final response.
+              </div>
+              
+              {/* Redirect chain visualization */}
+              <div className="space-y-3">
+                {response.redirects?.map((redirect, idx) => (
+                  <div key={idx}>
+                    <div className="rounded-lg border border-border bg-muted/30 p-3">
+                      {/* Status and hop number */}
+                      <div className="mb-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-semibold text-muted-foreground">
+                            HOP {idx + 1}
+                          </span>
+                          <span
+                            className={cn(
+                              "rounded px-2 py-0.5 text-xs font-bold",
+                              STATUS_COLORS[String(redirect.statusCode)[0]] ?? "text-slate-700 bg-slate-100",
+                            )}
+                          >
+                            {redirect.statusCode} {redirect.statusText}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(redirect.location);
+                          }}
+                          className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                          aria-label="Copy location"
+                          title="Copy location URL"
+                        >
+                          <Copy className="size-3" />
+                        </button>
+                      </div>
+
+                      {/* Location URL */}
+                      <div className="mb-2">
+                        <div className="text-[10px] font-medium text-muted-foreground mb-1">Location:</div>
+                        <div className="font-mono text-xs text-foreground break-all bg-background/50 rounded px-2 py-1.5">
+                          {redirect.location}
+                        </div>
+                      </div>
+
+                      {/* Headers (collapsed by default, expandable if needed) */}
+                      {Object.keys(redirect.headers).length > 0 && (
+                        <details className="mt-2">
+                          <summary className="cursor-pointer text-[10px] font-medium text-muted-foreground hover:text-foreground select-none">
+                            Headers ({Object.keys(redirect.headers).length})
+                          </summary>
+                          <div className="mt-2 space-y-1 pl-2">
+                            {Object.entries(redirect.headers).map(([k, v]) => (
+                              <div key={k} className="grid grid-cols-[8rem_1fr] gap-2 text-[11px]">
+                                <span className="font-medium text-muted-foreground truncate">{k}:</span>
+                                <span className="font-mono text-foreground break-all">{v}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      )}
+                    </div>
+
+                    {/* Arrow between redirects */}
+                    {idx < (response.redirects?.length || 0) - 1 && (
+                      <div className="flex items-center justify-center py-2">
+                        <ArrowRight className="size-4 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* Final response indicator */}
+                {response.redirects && response.redirects.length > 0 && (
+                  <>
+                    <div className="flex items-center justify-center py-2">
+                      <ArrowRight className="size-4 text-muted-foreground" />
+                    </div>
+                    <div className="rounded-lg border border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/20 p-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-semibold text-green-700 dark:text-green-400">
+                          FINAL RESPONSE
+                        </span>
+                        <span
+                          className={cn(
+                            "rounded px-2 py-0.5 text-xs font-bold",
+                            STATUS_COLORS[String(response.statusCode)[0]] ?? "text-slate-700 bg-slate-100",
+                          )}
+                        >
+                          {response.statusCode} {response.statusText}
+                        </span>
+                      </div>
+                      <div className="mt-2 text-xs text-green-700 dark:text-green-400">
+                        The redirect chain ended here. Response body and headers are shown in the Response and Headers tabs.
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>

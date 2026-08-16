@@ -203,6 +203,7 @@ export function RepeaterEditor() {
           size:       data.size,
           headers:    data.headers,
           cookies:    data.cookies || [],
+          redirects:  data.redirects || [],
           body:       data.body,
         },
       });
@@ -215,6 +216,7 @@ export function RepeaterEditor() {
           size: data.size,
           headers: data.headers,
           cookies: data.cookies || [],
+          redirects: data.redirects,
           body: data.body,
         },
       });

@@ -56,6 +56,12 @@ export type ResponseState =
         secure?: boolean;
         sameSite?: string;
       }>;
+      redirects?: Array<{
+        statusCode: number;
+        statusText: string;
+        location: string;
+        headers: Record<string, string>;
+      }>;
       body: string;
     }
   | { status: "error"; message: string };
@@ -299,6 +305,7 @@ export function RequestEditor() {
           size:       entry.response.size,
           headers:    entry.response.headers,
           cookies:    entry.response.cookies || [],
+          redirects:  entry.response.redirects,
           body:       entry.response.body,
         });
       }
@@ -434,6 +441,7 @@ export function RequestEditor() {
           size:       data.size,
           headers:    data.headers,
           cookies:    data.cookies || [],
+          redirects:  data.redirects || [],
           body:       data.body,
         },
       });
@@ -445,6 +453,7 @@ export function RequestEditor() {
         size: data.size,
         headers: data.headers,
         cookies: data.cookies || [],
+        redirects: data.redirects,
         body: data.body,
       });
     } catch (err) {

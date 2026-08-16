@@ -47,6 +47,9 @@ export async function addHistoryEntryAction(
       responseCookies:    payload.response?.cookies
         ? JSON.stringify(payload.response.cookies)
         : null,
+      responseRedirects:  payload.response?.redirects
+        ? JSON.stringify(payload.response.redirects)
+        : null,
       // Full body — capped to avoid exceeding Appwrite attribute size limit
       responseBody:       payload.response?.body
         ? payload.response.body.slice(0, MAX_RESPONSE_BODY)
@@ -146,6 +149,7 @@ function docToEntry(doc: Record<string, any>): HistoryEntry {
             size:       doc.responseSize       ?? 0,
             headers:    safeJson(doc.responseHeaders, {}),
             cookies:    safeJson(doc.responseCookies, []),
+            redirects:  safeJson(doc.responseRedirects, []),
             body:       doc.responseBody       ?? "",
           }
         : undefined,
