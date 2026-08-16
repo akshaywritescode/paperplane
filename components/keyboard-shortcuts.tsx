@@ -109,7 +109,7 @@ function ShortcutsModal({ onClose }: { onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-lg rounded-2xl border bg-background shadow-2xl"
+        className="relative w-full max-w-2xl rounded-2xl border bg-background shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -128,7 +128,7 @@ function ShortcutsModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Groups */}
-        <div className="max-h-[70vh] overflow-y-auto px-5 py-4 space-y-5">
+        <div className="max-h-[50vh] overflow-y-auto px-5 py-4 space-y-5">
           {groups.map((group) => (
             <div key={group.title}>
               <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
