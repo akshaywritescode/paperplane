@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { poppins } from "./font";
+import { griffy, montserrat, poppins } from "./font";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -78,7 +78,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${poppins.className} h-full antialiased`}
+      className={`${poppins.className} ${poppins.variable} ${montserrat.variable} ${griffy.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
