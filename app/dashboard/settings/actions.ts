@@ -19,7 +19,7 @@ async function getOrigin() {
     headersList.get("origin") ??
     process.env.NEXT_PUBLIC_SITE_URL ??
     "http://localhost:3000"
-  );
+  ).replace(/\/$/, "");
 }
 
 async function requireAccount() {

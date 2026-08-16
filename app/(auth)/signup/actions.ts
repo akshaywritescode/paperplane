@@ -15,13 +15,23 @@ function getFormValue(formData: FormData, key: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 function getOrigin(headersList: Awaited<ReturnType<typeof headers>>) {
   return (
     headersList.get("origin") ??
     process.env.NEXT_PUBLIC_SITE_URL ??
     "http://localhost:3000"
-  );
-}export async function signUp(formData: FormData) {
+  ).replace(/\/$/, "");
+}
+
+async function getSiteUrl() {
+  return getOrigin(await headers());
+}
+
+export async function signUp(formData: FormData) {
   const name = getFormValue(formData, "name");
   const email = getFormValue(formData, "email");
   const password = getFormValue(formData, "password");
@@ -91,21 +101,27 @@ export async function signUpWithOAuth(formData: FormData) {
     redirect("/signup?error=Unsupported%20OAuth%20provider");
   }
 
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "http://localhost:3000";
-
-  const client = createAppwriteClient();
-  const account = new Account(client);
-
   const oauthProvider =
     provider === "google" ? OAuthProvider.Google : OAuthProvider.Github;
 
-  const redirectUrl = await account.createOAuth2Token({
-    provider: oauthProvider,
-    success: `${siteUrl}/auth/oauth`,
-    failure: `${siteUrl}/signup?error=OAuth%20sign-in%20failed`,
-  });
+  let redirectUrl: string;
+  try {
+    const siteUrl = await getSiteUrl();
+    const client = createAppwriteClient();
+    const account = new Account(client);
+
+    redirectUrl = await account.createOAuth2Token({
+      provider: oauthProvider,
+      success: `${siteUrl}/auth/oauth`,
+      failure: `${siteUrl}/signup?error=OAuth%20sign-in%20failed`,
+    });
+  } catch (error) {
+    redirect(
+      `/signup?error=${encodeURIComponent(
+        getErrorMessage(error, "OAuth sign-up failed"),
+      )}`,
+    );
+  }
 
   redirect(redirectUrl);
 }

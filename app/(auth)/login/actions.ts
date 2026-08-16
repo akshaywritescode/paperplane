@@ -6,11 +6,25 @@ import {
   setAppwriteSessionCookie,
 } from "@/lib/appwrite/server";
 import { OAuthProvider, Account } from "node-appwrite";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 function getFormValue(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
+async function getSiteUrl() {
+  const headersList = await headers();
+  return (
+    headersList.get("origin") ??
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    "http://localhost:3000"
+  ).replace(/\/$/, "");
 }
 
 export async function logIn(formData: FormData) {
@@ -76,20 +90,26 @@ export async function logInWithOAuth(formData: FormData) {
     redirect("/login?error=Unsupported%20OAuth%20provider");
   }
 
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "http://localhost:3000";
-
-  const account = new Account(createAppwriteClient());
-
   const oauthProvider =
     provider === "google" ? OAuthProvider.Google : OAuthProvider.Github;
 
-  const redirectUrl = await account.createOAuth2Token({
-    provider: oauthProvider,
-    success: `${siteUrl}/auth/oauth`,
-    failure: `${siteUrl}/login?error=OAuth%20sign-in%20failed`,
-  });
+  let redirectUrl: string;
+  try {
+    const siteUrl = await getSiteUrl();
+    const account = new Account(createAppwriteClient());
+
+    redirectUrl = await account.createOAuth2Token({
+      provider: oauthProvider,
+      success: `${siteUrl}/auth/oauth`,
+      failure: `${siteUrl}/login?error=OAuth%20sign-in%20failed`,
+    });
+  } catch (error) {
+    redirect(
+      `/login?error=${encodeURIComponent(
+        getErrorMessage(error, "OAuth sign-in failed"),
+      )}`,
+    );
+  }
 
   redirect(redirectUrl);
 }

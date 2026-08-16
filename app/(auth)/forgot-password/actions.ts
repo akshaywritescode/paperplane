@@ -20,13 +20,14 @@ export async function requestPasswordReset(formData: FormData) {
     headersList.get("origin") ??
     process.env.NEXT_PUBLIC_SITE_URL ??
     "http://localhost:3000";
+  const siteUrl = origin.replace(/\/$/, "");
 
   const account = new Account(createAppwriteClient());
 
   try {
     await account.createRecovery({
       email,
-      url: `${origin}/auth/reset-password`,
+      url: `${siteUrl}/auth/reset-password`,
     });
   } catch (error) {
     redirect(
