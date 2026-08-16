@@ -204,7 +204,9 @@ export async function POST(request: NextRequest) {
       finalResponse = await fetch(currentUrl, fetchOptions);
     }
 
-    const time = Date.now() - start;
+    const ttfb = Date.now() - start; // time until response headers received
+
+    const transferStart = Date.now();
 
     // Stream the response body with a 5 MB hard cap to prevent OOM / timeouts.
     const MAX_BODY_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -254,6 +256,9 @@ export async function POST(request: NextRequest) {
       fullSize = new Blob([responseBody]).size;
     }
 
+    const transfer = Date.now() - transferStart;
+    const total    = ttfb + transfer;
+
     // Forward response headers and extract cookies
     const responseHeaders: Record<string, string> = {};
     const cookies: Array<{
@@ -285,7 +290,8 @@ export async function POST(request: NextRequest) {
       headers: responseHeaders,
       cookies,
       body: responseBody,
-      time,
+      time: total,
+      timing: { ttfb, transfer, total },
       size: fullSize,
       ...(truncated && { truncated: true, fullSize }),
       redirects: redirectChain.length > 0 ? redirectChain : undefined,

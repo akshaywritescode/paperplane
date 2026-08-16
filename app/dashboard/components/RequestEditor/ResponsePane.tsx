@@ -144,7 +144,52 @@ export function ResponsePane({ response, onClear, url = "" }: { response: Respon
           >
             {response.statusCode} {response.statusText}
           </span>
-          <span className="text-xs text-muted-foreground">{response.time} ms</span>
+          {/* Time chip — shows breakdown tooltip when timing data is available */}
+          {response.timing ? (
+            <div className="group relative">
+              <span className="cursor-default text-xs text-muted-foreground underline decoration-dashed underline-offset-2">
+                {response.time} ms
+              </span>
+              {/* Tooltip */}
+              <div className="pointer-events-none absolute left-0 top-full z-50 mt-1.5 hidden w-52 rounded-lg border bg-popover p-3 shadow-lg group-hover:block">
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Timing breakdown
+                </p>
+                {/* TTFB bar */}
+                <div className="mb-2">
+                  <div className="mb-1 flex items-center justify-between text-[11px]">
+                    <span className="font-medium text-foreground">TTFB</span>
+                    <span className="font-mono text-muted-foreground">{response.timing.ttfb} ms</span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-sky-500"
+                      style={{ width: `${Math.min(100, (response.timing.ttfb / response.timing.total) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+                {/* Transfer bar */}
+                <div className="mb-2">
+                  <div className="mb-1 flex items-center justify-between text-[11px]">
+                    <span className="font-medium text-foreground">Transfer</span>
+                    <span className="font-mono text-muted-foreground">{response.timing.transfer} ms</span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-orange-500"
+                      style={{ width: `${Math.min(100, (response.timing.transfer / response.timing.total) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="border-t pt-2 flex items-center justify-between text-[11px]">
+                  <span className="font-semibold text-foreground">Total</span>
+                  <span className="font-mono font-semibold text-foreground">{response.timing.total} ms</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <span className="text-xs text-muted-foreground">{response.time} ms</span>
+          )}
           <span className="text-xs text-muted-foreground">{formatSize(response.size)}</span>
 
           <div className="ml-auto flex items-center">

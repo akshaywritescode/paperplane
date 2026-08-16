@@ -51,6 +51,8 @@ export type ResponseState =
       truncated?: boolean;
       /** Full byte count of the original response (only present when truncated). */
       fullSize?: number;
+      /** Timing breakdown in milliseconds. */
+      timing?: { ttfb: number; transfer: number; total: number };
       headers: Record<string, string>;
       cookies: Array<{
         name: string;
@@ -675,6 +677,7 @@ export function RequestEditor() {
         time: data.time,
         size: data.size,
         ...(data.truncated && { truncated: true, fullSize: data.fullSize }),
+        ...(data.timing && { timing: data.timing }),
         headers: data.headers,
         cookies: data.cookies || [],
         redirects: data.redirects,

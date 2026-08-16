@@ -214,6 +214,7 @@ export function RepeaterEditor() {
           time: data.time,
           size: data.size,
           ...(data.truncated && { truncated: true, fullSize: data.fullSize }),
+          ...(data.timing && { timing: data.timing }),
           headers: data.headers,
           cookies: data.cookies || [],
           redirects: data.redirects,
