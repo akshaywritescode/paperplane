@@ -139,9 +139,8 @@ export function RepeaterEditor() {
         `${encodeURIComponent(authQp.key)}=${encodeURIComponent(authQp.value)}`;
     }
 
-    const METHODS_WITH_BODY = ["POST", "PUT", "PATCH", "DELETE"];
     const bodyPayload: Record<string, unknown> = {};
-    if (METHODS_WITH_BODY.includes(activeTab.method) && hasBodyContent(state.body)) {
+    if (hasBodyContent(state.body)) {
       const b = state.body;
       if (b.type === "raw") {
         bodyPayload.bodyType = "raw";

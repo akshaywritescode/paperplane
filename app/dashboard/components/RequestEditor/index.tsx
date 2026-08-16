@@ -80,8 +80,8 @@ const DEFAULT_TAB: RequestTab = {
 
 /** Build the proxy payload fields for the body config */
 function buildBodyPayload(body: BodyConfig, method: HttpMethod) {
-  const METHODS_WITH_BODY = ["POST", "PUT", "PATCH", "DELETE"];
-  if (!METHODS_WITH_BODY.includes(method) || !hasBodyContent(body)) return {};
+  // Forward body for any method that has content — DELETE, OPTIONS, etc. are valid per RFC 7231.
+  if (!hasBodyContent(body)) return {};
 
   if (body.type === "raw") {
     return { bodyType: "raw", rawBody: body.content, rawContentType: body.contentType };

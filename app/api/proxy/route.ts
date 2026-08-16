@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-const METHODS_WITH_BODY = ["POST", "PUT", "PATCH", "DELETE"];
+const METHODS_WITH_BODY = ["POST", "PUT", "PATCH", "DELETE", "OPTIONS"];
 
 /**
  * Parse a Set-Cookie header value into structured cookie object
