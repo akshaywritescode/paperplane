@@ -299,14 +299,23 @@ export function RequestEditor() {
     "1",
   );
 
-  // Persist per-tab state map (params/headers/body/auth — NOT response)
+  // Persist per-tab state map (params/headers/body/auth)
   const [tabStates, setTabStates] = useLocalStorage<Record<string, Omit<TabState, "response">>>(
     "pp_editor_tab_states",
     {},
   );
 
-  // Response is session-only (not persisted — large, not useful across sessions)
-  const [responses, setResponses] = useState<Record<string, ResponseState>>({});
+  // Persist last response per tab — body capped at 100 KB to stay within
+  // localStorage quota (~5 MB origin limit). Large responses are still visible
+  // during the session via the in-memory overlay below.
+  const RESPONSE_BODY_CAP = 100 * 1024; // 100 KB
+  const [persistedResponses, setPersistedResponses] = useLocalStorage<Record<string, ResponseState>>(
+    "pp_editor_responses",
+    {},
+  );
+  // In-memory overlay for the current session — holds the full body even when
+  // it exceeds the cap, so you always see the complete response while the page is open.
+  const [sessionResponses, setSessionResponses] = useState<Record<string, ResponseState>>({});
 
   const { addTab: addRepeaterTab } = useRepeater();
   const router = useRouter();
@@ -320,12 +329,14 @@ export function RequestEditor() {
 
   function getTabState(id: string): TabState {
     const saved = tabStates[id];
+    // Session response takes priority (full body); fall back to persisted (may be capped)
+    const response = sessionResponses[id] ?? persistedResponses[id] ?? { status: "idle" };
     return {
       params:   saved?.params   ?? [],
       headers:  saved?.headers  ?? [],
       body:     saved?.body     ?? DEFAULT_BODY,
       auth:     saved?.auth     ?? { type: "none" },
-      response: responses[id]   ?? { status: "idle" },
+      response,
     };
   }
 
@@ -335,14 +346,29 @@ export function RequestEditor() {
     value: TabState[K],
   ) {
     if (key === "response") {
-      setResponses((prev) => ({ ...prev, [id]: value as ResponseState }));
+      const r = value as ResponseState;
+      // Always store full response in session memory
+      setSessionResponses((prev) => ({ ...prev, [id]: r }));
+      // Store a capped version in localStorage
+      if (r.status === "done") {
+        const body = r.body ?? "";
+        const capped = body.length > RESPONSE_BODY_CAP;
+        setPersistedResponses((prev) => ({
+          ...prev,
+          [id]: {
+            ...r,
+            body: capped ? body.slice(0, RESPONSE_BODY_CAP) : body,
+            ...(capped && { truncated: true, fullSize: r.fullSize ?? new Blob([body]).size }),
+          },
+        }));
+      } else {
+        // For idle/loading/error states persist as-is
+        setPersistedResponses((prev) => ({ ...prev, [id]: r }));
+      }
     } else {
       setTabStates((prev) => ({
         ...prev,
-        [id]: {
-          ...(prev[id] ?? {}),
-          [key]: value,
-        },
+        [id]: { ...(prev[id] ?? {}), [key]: value },
       }));
     }
   }
@@ -422,16 +448,9 @@ export function RequestEditor() {
     const next = tabs[idx === 0 ? 1 : idx - 1];
     setTabs((prev) => prev.filter((t) => t.id !== id));
     // Clean up persisted state for the closed tab
-    setTabStates((prev) => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
-    setResponses((prev) => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
+    setTabStates((prev) => { const c = { ...prev }; delete c[id]; return c; });
+    setPersistedResponses((prev) => { const c = { ...prev }; delete c[id]; return c; });
+    setSessionResponses((prev) => { const c = { ...prev }; delete c[id]; return c; });
     if (id === validActiveTabId) setActiveTabId(next.id);
   }
 
