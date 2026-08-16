@@ -44,6 +44,10 @@ export type ResponseState =
       statusText: string;
       time: number;
       size: number;
+      /** True when the response body was cut off at the 5 MB proxy limit. */
+      truncated?: boolean;
+      /** Full byte count of the original response (only present when truncated). */
+      fullSize?: number;
       headers: Record<string, string>;
       cookies: Array<{
         name: string;
@@ -451,6 +455,7 @@ export function RequestEditor() {
         statusText: data.statusText,
         time: data.time,
         size: data.size,
+        ...(data.truncated && { truncated: true, fullSize: data.fullSize }),
         headers: data.headers,
         cookies: data.cookies || [],
         redirects: data.redirects,

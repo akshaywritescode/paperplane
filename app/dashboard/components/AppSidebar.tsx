@@ -21,6 +21,7 @@ import {
   FolderOpen,
   LayoutDashboard,
   RotateCw,
+  Server,
   Settings,
   Zap,
 } from "lucide-react";
@@ -41,7 +42,8 @@ const mainNav = [
 ];
 
 const otherNav = [
-  { href: "/dashboard/integrations", label: "Integrations", icon: Zap     },
+  { href: "/dashboard/mock-server",  label: "Mock Server",  icon: Server   },
+  { href: "/dashboard/integrations", label: "Integrations", icon: Zap      },
   { href: "/dashboard/settings",     label: "Settings",     icon: Settings },
 ];
 

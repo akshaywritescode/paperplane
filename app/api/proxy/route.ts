@@ -205,7 +205,54 @@ export async function POST(request: NextRequest) {
     }
 
     const time = Date.now() - start;
-    const responseBody = await finalResponse.text();
+
+    // Stream the response body with a 5 MB hard cap to prevent OOM / timeouts.
+    const MAX_BODY_BYTES = 5 * 1024 * 1024; // 5 MB
+    let responseBody = "";
+    let truncated = false;
+    let fullSize = 0;
+
+    if (finalResponse.body) {
+      const reader = finalResponse.body.getReader();
+      const decoder = new TextDecoder("utf-8", { fatal: false });
+      const chunks: Uint8Array[] = [];
+      let accumulated = 0;
+
+      outer: while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        accumulated += value.byteLength;
+        fullSize += value.byteLength;
+
+        if (accumulated <= MAX_BODY_BYTES) {
+          chunks.push(value);
+        } else {
+          // Determine how many bytes we can still fit
+          const remaining = MAX_BODY_BYTES - (accumulated - value.byteLength);
+          if (remaining > 0) chunks.push(value.slice(0, remaining));
+          truncated = true;
+          // Drain the rest to count the full size without buffering it
+          while (true) {
+            const { done: d, value: v } = await reader.read();
+            if (d) break outer;
+            fullSize += v.byteLength;
+          }
+        }
+      }
+
+      responseBody = chunks.reduce(
+        (acc, chunk) => acc + decoder.decode(chunk, { stream: true }),
+        "",
+      );
+      // Flush the decoder
+      responseBody += decoder.decode();
+
+      if (!truncated) fullSize = new Blob([responseBody]).size;
+    } else {
+      // Fallback for environments where body is not a ReadableStream
+      responseBody = await finalResponse.text();
+      fullSize = new Blob([responseBody]).size;
+    }
 
     // Forward response headers and extract cookies
     const responseHeaders: Record<string, string> = {};
@@ -239,7 +286,8 @@ export async function POST(request: NextRequest) {
       cookies,
       body: responseBody,
       time,
-      size: new Blob([responseBody]).size,
+      size: fullSize,
+      ...(truncated && { truncated: true, fullSize }),
       redirects: redirectChain.length > 0 ? redirectChain : undefined,
     });
   } catch (error) {

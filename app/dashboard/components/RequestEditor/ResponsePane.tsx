@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FileText, Loader2, AlertCircle, MoreVertical, Copy, ListFilter, Download, Trash2, ChevronsUpDown, Check, WrapText, Cookie, ArrowRight } from "lucide-react";
+import { FileText, Loader2, AlertCircle, MoreVertical, Copy, ListFilter, Download, Trash2, ChevronsUpDown, Check, WrapText, Cookie, ArrowRight, AlertTriangle } from "lucide-react";
 import { SiCss, SiHtml5, SiJavascript, SiJson, SiXml } from "@icons-pack/react-simple-icons";
 import { cn } from "@/lib/utils";
 import { CodeBlock, detectLang } from "./CodeBlock";
@@ -51,7 +51,8 @@ const STATUS_COLORS: Record<string, string> = {
 
 function formatSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
-  return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export function ResponsePane({ response, onClear, url = "" }: { response: ResponseState; onClear: () => void; url?: string }) {
@@ -253,6 +254,24 @@ export function ResponsePane({ response, onClear, url = "" }: { response: Respon
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+        </div>
+      )}
+
+      {/* Truncation warning banner */}
+      {response.status === "done" && response.truncated && (
+        <div className="flex shrink-0 items-center gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-300">
+          <AlertTriangle className="size-3.5 shrink-0 text-amber-500" />
+          <span>
+            Response truncated at <strong>5 MB</strong>. Full response was{" "}
+            <strong>{formatSize(response.fullSize ?? response.size)}</strong>. Use{" "}
+            <button
+              onClick={downloadResponse}
+              className="underline underline-offset-2 hover:text-amber-900 dark:hover:text-amber-100 transition-colors"
+            >
+              Download Response
+            </button>{" "}
+            to save the complete body.
+          </span>
         </div>
       )}
 
