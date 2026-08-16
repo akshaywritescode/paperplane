@@ -22,6 +22,7 @@ import { BookmarkPlus, X, Loader2, FolderPlus, Terminal } from "lucide-react";
 import { useEnvironment } from "../../context/EnvironmentContext";
 import { useLocalStorage } from "@/lib/use-local-storage";
 import { parseCurl } from "@/lib/curl-parser";
+import { cn } from "@/lib/utils";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
 
