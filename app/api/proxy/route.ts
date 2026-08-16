@@ -2,6 +2,50 @@ import { type NextRequest, NextResponse } from "next/server";
 
 const METHODS_WITH_BODY = ["POST", "PUT", "PATCH", "DELETE"];
 
+/**
+ * Parse a Set-Cookie header value into structured cookie object
+ */
+function parseCookie(cookieString: string) {
+  try {
+    const parts = cookieString.split(";").map((p) => p.trim());
+    const [nameValue] = parts;
+    const [name, ...valueParts] = nameValue.split("=");
+    const value = valueParts.join("="); // Handle values with '=' in them
+
+    const cookie: {
+      name: string;
+      value: string;
+      domain?: string;
+      path?: string;
+      expires?: string;
+      maxAge?: number;
+      httpOnly?: boolean;
+      secure?: boolean;
+      sameSite?: string;
+    } = { name: name.trim(), value: value.trim() };
+
+    // Parse attributes
+    for (let i = 1; i < parts.length; i++) {
+      const part = parts[i];
+      const [key, ...valParts] = part.split("=");
+      const keyLower = key.toLowerCase().trim();
+      const val = valParts.join("=").trim();
+
+      if (keyLower === "domain") cookie.domain = val;
+      else if (keyLower === "path") cookie.path = val;
+      else if (keyLower === "expires") cookie.expires = val;
+      else if (keyLower === "max-age") cookie.maxAge = parseInt(val, 10);
+      else if (keyLower === "httponly") cookie.httpOnly = true;
+      else if (keyLower === "secure") cookie.secure = true;
+      else if (keyLower === "samesite") cookie.sameSite = val;
+    }
+
+    return cookie;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const {
@@ -101,16 +145,36 @@ export async function POST(request: NextRequest) {
 
     const responseBody = await res.text();
 
-    // Forward response headers
+    // Forward response headers and extract cookies
     const responseHeaders: Record<string, string> = {};
+    const cookies: Array<{
+      name: string;
+      value: string;
+      domain?: string;
+      path?: string;
+      expires?: string;
+      maxAge?: number;
+      httpOnly?: boolean;
+      secure?: boolean;
+      sameSite?: string;
+    }> = [];
+
     res.headers.forEach((v, k) => {
-      responseHeaders[k] = v;
+      const keyLower = k.toLowerCase();
+      if (keyLower === "set-cookie") {
+        // Parse set-cookie header
+        const parsed = parseCookie(v);
+        if (parsed) cookies.push(parsed);
+      } else {
+        responseHeaders[k] = v;
+      }
     });
 
     return NextResponse.json({
       statusCode: res.status,
       statusText: res.statusText,
       headers: responseHeaders,
+      cookies,
       body: responseBody,
       time,
       size: new Blob([responseBody]).size,

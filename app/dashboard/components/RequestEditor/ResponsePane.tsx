@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FileText, Loader2, AlertCircle, MoreVertical, Copy, ListFilter, Download, Trash2, ChevronsUpDown, Check, WrapText } from "lucide-react";
+import { FileText, Loader2, AlertCircle, MoreVertical, Copy, ListFilter, Download, Trash2, ChevronsUpDown, Check, WrapText, Cookie } from "lucide-react";
 import { SiCss, SiHtml5, SiJavascript, SiJson, SiXml } from "@icons-pack/react-simple-icons";
 import { cn } from "@/lib/utils";
 import { CodeBlock, detectLang } from "./CodeBlock";
@@ -39,7 +39,7 @@ const LANGS: { value: Lang; label: string }[] = [
   { value: "text",       label: "Text"       },
 ];
 
-type Tab = "response" | "headers";
+type Tab = "response" | "headers" | "cookies";
 
 const STATUS_COLORS: Record<string, string> = {
   "1": "text-slate-500 bg-slate-100",
@@ -117,6 +117,11 @@ export function ResponsePane({ response, onClear, url = "" }: { response: Respon
         .map(([k, v]) => `${k}: ${v}`)
         .join("\n");
     }
+    if (tab === "cookies") {
+      return response.cookies
+        .map((c) => `${c.name}=${c.value}`)
+        .join("\n");
+    }
     return "";
   }
 
@@ -137,7 +142,7 @@ export function ResponsePane({ response, onClear, url = "" }: { response: Respon
           <span className="text-xs text-muted-foreground">{formatSize(response.size)}</span>
 
           <div className="ml-auto flex items-center">
-            {(["response", "headers"] as Tab[]).map((t) => (
+            {(["response", "headers", "cookies"] as Tab[]).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -302,6 +307,111 @@ export function ResponsePane({ response, onClear, url = "" }: { response: Respon
                 </span>
               </div>
             ))}
+          </div>
+        )}
+
+        {response.status === "done" && tab === "cookies" && (
+          <div className="flex-1 overflow-auto">
+            {response.cookies.length === 0 ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted-foreground py-12">
+                <div className="flex size-16 items-center justify-center rounded-full bg-muted">
+                  <Cookie className="size-7" />
+                </div>
+                <p className="text-sm font-medium">No cookies</p>
+                <p className="text-xs">This response doesn't contain any Set-Cookie headers</p>
+              </div>
+            ) : (
+              <div className="space-y-4 p-4">
+                {response.cookies.map((cookie, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-lg border border-border bg-muted/30 p-3 text-xs"
+                  >
+                    {/* Cookie name and value */}
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-foreground mb-1">
+                          <HighlightedText
+                            text={cookie.name}
+                            query={searchQuery}
+                            current={-1}
+                          />
+                        </div>
+                        <div className="font-mono text-muted-foreground break-all">
+                          <HighlightedText
+                            text={cookie.value}
+                            query={searchQuery}
+                            current={-1}
+                          />
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${cookie.name}=${cookie.value}`);
+                        }}
+                        className="shrink-0 rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        aria-label="Copy cookie"
+                      >
+                        <Copy className="size-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Cookie attributes */}
+                    {(cookie.domain || cookie.path || cookie.expires || cookie.maxAge !== undefined || cookie.httpOnly || cookie.secure || cookie.sameSite) && (
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-border/50 pt-2.5">
+                        {cookie.domain && (
+                          <>
+                            <span className="text-muted-foreground">Domain:</span>
+                            <span className="font-mono text-foreground">{cookie.domain}</span>
+                          </>
+                        )}
+                        {cookie.path && (
+                          <>
+                            <span className="text-muted-foreground">Path:</span>
+                            <span className="font-mono text-foreground">{cookie.path}</span>
+                          </>
+                        )}
+                        {cookie.expires && (
+                          <>
+                            <span className="text-muted-foreground">Expires:</span>
+                            <span className="font-mono text-foreground">{cookie.expires}</span>
+                          </>
+                        )}
+                        {cookie.maxAge !== undefined && (
+                          <>
+                            <span className="text-muted-foreground">Max-Age:</span>
+                            <span className="font-mono text-foreground">{cookie.maxAge}s</span>
+                          </>
+                        )}
+                        {cookie.sameSite && (
+                          <>
+                            <span className="text-muted-foreground">SameSite:</span>
+                            <span className="font-mono text-foreground">{cookie.sameSite}</span>
+                          </>
+                        )}
+                        {(cookie.httpOnly || cookie.secure) && (
+                          <>
+                            <span className="text-muted-foreground">Flags:</span>
+                            <span className="flex gap-2">
+                              {cookie.httpOnly && (
+                                <span className="rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-medium text-orange-700 dark:bg-orange-950/40 dark:text-orange-400">
+                                  HttpOnly
+                                </span>
+                              )}
+                              {cookie.secure && (
+                                <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-950/40 dark:text-green-400">
+                                  Secure
+                                </span>
+                              )}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -45,6 +45,17 @@ export type ResponseState =
       time: number;
       size: number;
       headers: Record<string, string>;
+      cookies: Array<{
+        name: string;
+        value: string;
+        domain?: string;
+        path?: string;
+        expires?: string;
+        maxAge?: number;
+        httpOnly?: boolean;
+        secure?: boolean;
+        sameSite?: string;
+      }>;
       body: string;
     }
   | { status: "error"; message: string };
@@ -287,6 +298,7 @@ export function RequestEditor() {
           time:       entry.response.time,
           size:       entry.response.size,
           headers:    entry.response.headers,
+          cookies:    entry.response.cookies || [],
           body:       entry.response.body,
         });
       }
@@ -421,6 +433,7 @@ export function RequestEditor() {
           time:       data.time,
           size:       data.size,
           headers:    data.headers,
+          cookies:    data.cookies || [],
           body:       data.body,
         },
       });
@@ -431,6 +444,7 @@ export function RequestEditor() {
         time: data.time,
         size: data.size,
         headers: data.headers,
+        cookies: data.cookies || [],
         body: data.body,
       });
     } catch (err) {

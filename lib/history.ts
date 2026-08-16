@@ -24,6 +24,17 @@ export type HistoryEntry = {
     time: number;
     size: number;
     headers: Record<string, string>;
+    cookies: Array<{
+      name: string;
+      value: string;
+      domain?: string;
+      path?: string;
+      expires?: string;
+      maxAge?: number;
+      httpOnly?: boolean;
+      secure?: boolean;
+      sameSite?: string;
+    }>;
     body: string;            // Full response body (capped at 500 KB server-side)
   };
 };

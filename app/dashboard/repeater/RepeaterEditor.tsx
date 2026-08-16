@@ -202,6 +202,7 @@ export function RepeaterEditor() {
           time:       data.time,
           size:       data.size,
           headers:    data.headers,
+          cookies:    data.cookies || [],
           body:       data.body,
         },
       });
@@ -213,6 +214,7 @@ export function RepeaterEditor() {
           time: data.time,
           size: data.size,
           headers: data.headers,
+          cookies: data.cookies || [],
           body: data.body,
         },
       });
