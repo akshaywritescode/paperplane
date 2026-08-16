@@ -18,9 +18,10 @@ import {
   saveRequestAction,
 } from "@/app/dashboard/collections/actions";
 import type { Collection } from "@/lib/collections";
-import { BookmarkPlus, X, Loader2, FolderPlus } from "lucide-react";
+import { BookmarkPlus, X, Loader2, FolderPlus, Terminal } from "lucide-react";
 import { useEnvironment } from "../../context/EnvironmentContext";
 import { useLocalStorage } from "@/lib/use-local-storage";
+import { parseCurl } from "@/lib/curl-parser";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
 
@@ -107,6 +108,119 @@ function buildBodyPayload(body: BodyConfig, method: HttpMethod) {
     };
   }
   return {};
+}
+
+// ─── Import cURL modal ────────────────────────────────────────────────────────
+function ImportCurlButton({
+  onImport,
+}: {
+  onImport: (parsed: ReturnType<typeof parseCurl>) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const taRef = useRef<HTMLTextAreaElement>(null);
+
+  function handleOpen() {
+    setOpen(true);
+    setInput("");
+    setError(null);
+    setTimeout(() => taRef.current?.focus(), 50);
+  }
+
+  function handleImport() {
+    try {
+      const parsed = parseCurl(input.trim());
+      onImport(parsed);
+      setOpen(false);
+      setInput("");
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to parse cURL command");
+    }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Escape") { setOpen(false); return; }
+    // Ctrl/Cmd+Enter to import
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleImport();
+  }
+
+  return (
+    <>
+      <button
+        onClick={handleOpen}
+        title="Import from cURL"
+        className="flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-muted/50 px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
+      >
+        <Terminal className="size-3.5" />
+        <span className="hidden sm:inline">Import</span>
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)}>
+          <div
+            className="w-full max-w-xl rounded-xl border bg-background p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={handleKeyDown}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-semibold">Import from cURL</h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Paste a cURL command — method, headers, body and auth will be extracted automatically.
+                </p>
+              </div>
+              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <textarea
+              ref={taRef}
+              value={input}
+              onChange={(e) => { setInput(e.target.value); setError(null); }}
+              placeholder={`curl 'https://api.example.com/users' \\\n  -H 'Authorization: Bearer token123' \\\n  -H 'Content-Type: application/json' \\\n  -d '{"name":"Akshay"}'`}
+              rows={8}
+              spellCheck={false}
+              className={cn(
+                "w-full resize-none rounded-lg border bg-muted/30 px-3 py-2.5 font-mono text-xs leading-relaxed outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20",
+                error && "border-red-400 focus:border-red-400 focus:ring-red-400/20",
+              )}
+            />
+
+            {error && (
+              <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-500">
+                <span className="size-3.5 shrink-0">⚠</span>
+                {error}
+              </p>
+            )}
+
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <p className="text-[11px] text-muted-foreground">
+                Tip: copy a request from browser DevTools → Copy as cURL
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setOpen(false)}
+                  className="rounded-md border px-3 py-1.5 text-xs transition hover:bg-muted"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleImport}
+                  disabled={!input.trim()}
+                  className="flex items-center gap-1.5 rounded-md bg-orange-500 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-orange-600 disabled:opacity-50"
+                >
+                  Import
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
 
 // ─── Save to Collection modal ────────────────────────────────────────────────
@@ -573,6 +687,21 @@ export function RequestEditor() {
     }
   }
 
+  function handleCurlImport(parsed: ReturnType<typeof parseCurl>) {
+    setTabs((prev) =>
+      prev.map((t) =>
+        t.id === validActiveTabId
+          ? { ...t, method: parsed.method, url: parsed.url }
+          : t,
+      ),
+    );
+    setParams(parsed.params);
+    setHeaders(parsed.headers);
+    setBody(parsed.body);
+    setAuth(parsed.auth);
+    setResponse({ status: "idle" });
+  }
+
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       {/* Tab bar */}
@@ -587,7 +716,7 @@ export function RequestEditor() {
         }
       />
 
-      {/* URL bar row — Send + Save */}
+      {/* URL bar row — Send + Import + Save */}
       <div className="flex items-center gap-2 border-b pr-2">
         <div className="flex-1 min-w-0">
           <UrlBar
@@ -600,6 +729,7 @@ export function RequestEditor() {
             onSend={sendRequest}
           />
         </div>
+        <ImportCurlButton onImport={handleCurlImport} />
         <SaveToCollectionButton
           method={activeTab.method}
           url={activeTab.url}
