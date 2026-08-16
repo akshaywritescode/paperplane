@@ -20,6 +20,7 @@ import {
 import type { Collection } from "@/lib/collections";
 import { BookmarkPlus, X, Loader2, FolderPlus } from "lucide-react";
 import { useEnvironment } from "../../context/EnvironmentContext";
+import { useLocalStorage } from "@/lib/use-local-storage";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
 
@@ -268,17 +269,96 @@ function SaveToCollectionButton({
 
 export function RequestEditor() {
 
-  const [tabs, setTabs] = useState<RequestTab[]>([DEFAULT_TAB]);
-  const [activeTabId, setActiveTabId] = useState("1");
-  const [params, setParams] = useState<ParamRow[]>([]);
-  const [headers, setHeaders] = useState<HeaderRow[]>([]);
-  const [body, setBody] = useState<BodyConfig>(DEFAULT_BODY);
-  const [auth, setAuth] = useState<AuthConfig>({ type: "none" });
-  const [response, setResponse] = useState<ResponseState>({ status: "idle" });
+  // ── Per-tab state map ────────────────────────────────────────────────────
+  // Each tab has its own params/headers/body/auth/response, stored in a map
+  // keyed by tab ID. This is persisted to localStorage so tabs survive refresh.
+
+  type TabState = {
+    params:   ParamRow[];
+    headers:  HeaderRow[];
+    body:     BodyConfig;
+    auth:     AuthConfig;
+    response: ResponseState;
+  };
+
+  const DEFAULT_TAB_STATE: TabState = {
+    params:   [],
+    headers:  [],
+    body:     DEFAULT_BODY,
+    auth:     { type: "none" },
+    response: { status: "idle" },
+  };
+
+  // Persist tab list + active tab
+  const [tabs, setTabs] = useLocalStorage<RequestTab[]>(
+    "pp_editor_tabs",
+    [DEFAULT_TAB],
+  );
+  const [activeTabId, setActiveTabId] = useLocalStorage<string>(
+    "pp_editor_active",
+    "1",
+  );
+
+  // Persist per-tab state map (params/headers/body/auth — NOT response)
+  const [tabStates, setTabStates] = useLocalStorage<Record<string, Omit<TabState, "response">>>(
+    "pp_editor_tab_states",
+    {},
+  );
+
+  // Response is session-only (not persisted — large, not useful across sessions)
+  const [responses, setResponses] = useState<Record<string, ResponseState>>({});
+
   const { addTab: addRepeaterTab } = useRepeater();
   const router = useRouter();
 
-  const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
+  // Ensure activeTabId is valid after restore (tab might have been deleted)
+  const validActiveTabId = tabs.find((t) => t.id === activeTabId)
+    ? activeTabId
+    : tabs[0]?.id ?? "1";
+
+  const activeTab = tabs.find((t) => t.id === validActiveTabId) ?? tabs[0];
+
+  function getTabState(id: string): TabState {
+    const saved = tabStates[id];
+    return {
+      params:   saved?.params   ?? [],
+      headers:  saved?.headers  ?? [],
+      body:     saved?.body     ?? DEFAULT_BODY,
+      auth:     saved?.auth     ?? { type: "none" },
+      response: responses[id]   ?? { status: "idle" },
+    };
+  }
+
+  function setTabStateField<K extends keyof TabState>(
+    id: string,
+    key: K,
+    value: TabState[K],
+  ) {
+    if (key === "response") {
+      setResponses((prev) => ({ ...prev, [id]: value as ResponseState }));
+    } else {
+      setTabStates((prev) => ({
+        ...prev,
+        [id]: {
+          ...(prev[id] ?? {}),
+          [key]: value,
+        },
+      }));
+    }
+  }
+
+  const state   = getTabState(validActiveTabId);
+  const params  = state.params;
+  const headers = state.headers;
+  const body    = state.body;
+  const auth    = state.auth;
+  const response = state.response;
+
+  const setParams  = (v: ParamRow[])  => setTabStateField(validActiveTabId, "params",  v);
+  const setHeaders = (v: HeaderRow[]) => setTabStateField(validActiveTabId, "headers", v);
+  const setBody    = (v: BodyConfig)  => setTabStateField(validActiveTabId, "body",    v);
+  const setAuth    = (v: AuthConfig)  => setTabStateField(validActiveTabId, "auth",    v);
+  const setResponse = (v: ResponseState) => setTabStateField(validActiveTabId, "response", v);
 
   // Restore from history (sessionStorage written by the history page)
   useEffect(() => {
@@ -287,10 +367,9 @@ export function RequestEditor() {
       if (!raw) return;
       sessionStorage.removeItem("paperplane_restore");
       const entry = JSON.parse(raw);
-      // Restore request fields
       setTabs((prev) =>
         prev.map((t) =>
-          t.id === activeTabId
+          t.id === validActiveTabId
             ? { ...t, method: entry.method, url: entry.url, name: entry.title || "untitled" }
             : t,
         ),
@@ -299,7 +378,6 @@ export function RequestEditor() {
       if (entry.headers) setHeaders(entry.headers);
       if (entry.body)    setBody(entry.body);
       if (entry.auth)    setAuth(entry.auth);
-      // Restore response so the pane shows the saved result immediately
       if (entry.response) {
         setResponse({
           status:     "done",
@@ -319,9 +397,9 @@ export function RequestEditor() {
 
   function sendToRepeater() {
     addRepeaterTab({
-      name: activeTab.name || activeTab.url || "untitled",
-      method: activeTab.method,
-      url: activeTab.url,
+      name:    activeTab.name || activeTab.url || "untitled",
+      method:  activeTab.method,
+      url:     activeTab.url,
       params,
       headers,
       body,
@@ -335,24 +413,31 @@ export function RequestEditor() {
     const newTab: RequestTab = { id, name: "untitled", method: "GET", url: "" };
     setTabs((prev) => [...prev, newTab]);
     setActiveTabId(id);
-    setParams([]);
-    setHeaders([]);
-    setBody(DEFAULT_BODY);
-    setAuth({ type: "none" });
-    setResponse({ status: "idle" });
+    // tabStates entry will be created lazily via getTabState defaults
   }
 
   function closeTab(id: string) {
     if (tabs.length === 1) return;
-    const idx = tabs.findIndex((t) => t.id === id);
+    const idx  = tabs.findIndex((t) => t.id === id);
     const next = tabs[idx === 0 ? 1 : idx - 1];
     setTabs((prev) => prev.filter((t) => t.id !== id));
-    if (id === activeTabId) setActiveTabId(next.id);
+    // Clean up persisted state for the closed tab
+    setTabStates((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+    setResponses((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+    if (id === validActiveTabId) setActiveTabId(next.id);
   }
 
   function updateTab(patch: Partial<RequestTab>) {
     setTabs((prev) =>
-      prev.map((t) => (t.id === activeTabId ? { ...t, ...patch } : t)),
+      prev.map((t) => (t.id === validActiveTabId ? { ...t, ...patch } : t)),
     );
   }
 
@@ -474,7 +559,7 @@ export function RequestEditor() {
       {/* Tab bar */}
       <TabBar
         tabs={tabs}
-        activeTabId={activeTabId}
+        activeTabId={validActiveTabId}
         onSelect={setActiveTabId}
         onClose={closeTab}
         onAdd={addTab}

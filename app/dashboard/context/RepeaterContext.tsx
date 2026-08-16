@@ -1,9 +1,10 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useCallback } from "react";
 import type { HttpMethod, ParamRow, HeaderRow, AuthConfig } from "../components/RequestEditor";
 import type { BodyConfig } from "../components/RequestEditor/body";
 import { DEFAULT_BODY } from "../components/RequestEditor/body";
+import { useLocalStorage } from "@/lib/use-local-storage";
 
 export type RepeaterTab = {
   id: string;
@@ -26,22 +27,22 @@ type RepeaterContextType = {
 const RepeaterContext = createContext<RepeaterContextType | null>(null);
 
 export function RepeaterProvider({ children }: { children: React.ReactNode }) {
-  const [tabs, setTabs] = useState<RepeaterTab[]>([]);
+  const [tabs, setTabs] = useLocalStorage<RepeaterTab[]>("pp_repeater_tabs", []);
 
   const addTab = useCallback((tab: Omit<RepeaterTab, "id">) => {
     const id = crypto.randomUUID();
     setTabs((prev) => [...prev, { ...tab, id }]);
-  }, []);
+  }, [setTabs]);
 
   const removeTab = useCallback((id: string) => {
     setTabs((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+  }, [setTabs]);
 
   const updateTab = useCallback((id: string, patch: Partial<RepeaterTab>) => {
     setTabs((prev) =>
       prev.map((t) => (t.id === id ? { ...t, ...patch } : t)),
     );
-  }, []);
+  }, [setTabs]);
 
   return (
     <RepeaterContext.Provider value={{ tabs, addTab, removeTab, updateTab }}>
