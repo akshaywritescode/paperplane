@@ -1,5 +1,5 @@
 import type { HttpMethod, ParamRow, HeaderRow } from "@/app/dashboard/components/RequestEditor";
-import type { BodyConfig, RawContentType, FormField } from "@/app/dashboard/components/RequestEditor/body";
+import type { BodyConfig, RawContentType, FormField, MultipartField } from "@/app/dashboard/components/RequestEditor/body";
 import type { AuthConfig } from "@/app/dashboard/components/RequestEditor/auth";
 
 export type ParsedCurl = {
@@ -253,11 +253,11 @@ export function parseCurl(raw: string): ParsedCurl {
     // multipart/form-data
     const fields = formPairs
       .filter(Boolean)
-      .map((pair): FormField => {
+      .map((pair): MultipartField => {
         const eq = pair.indexOf("=");
         const name  = eq !== -1 ? pair.slice(0, eq)  : pair;
         const value = eq !== -1 ? pair.slice(eq + 1) : "";
-        return { id: crypto.randomUUID(), enabled: true, name, value };
+        return { id: crypto.randomUUID(), enabled: true, name, isFile: false, value };
       });
     body = { type: "multipart", fields };
   } else if (

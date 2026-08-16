@@ -179,7 +179,7 @@ export async function updateProfileAvatar(formData: FormData): Promise<never> {
   const appwrite = await createAppwriteSessionClient();
   if (!appwrite) redirect("/login?error=Please%20log%20in%20first");
 
-  const bucketId = process.env.NEXT_PUBLIC_APPWRITE_AVATARS_BUCKET_ID;
+  const bucketId = process.env.APPWRITE_AVATARS_BUCKET_ID;
   if (!bucketId) {
     redirect("/dashboard/settings/profile?error=Avatars%20bucket%20not%20configured");
   }
@@ -226,7 +226,7 @@ export async function deleteProfileAvatar(): Promise<never> {
   const appwrite = await createAppwriteSessionClient();
   if (!appwrite) redirect("/login?error=Please%20log%20in%20first");
 
-  const bucketId = process.env.NEXT_PUBLIC_APPWRITE_AVATARS_BUCKET_ID;
+  const bucketId = process.env.APPWRITE_AVATARS_BUCKET_ID;
 
   let isError = false;
   let message = "";
