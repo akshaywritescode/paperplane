@@ -3,6 +3,11 @@ import "./globals.css";
 import { griffy, montserrat, poppins } from "./font";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
+// NOTE: set NEXT_PUBLIC_SITE_URL to your public production origin (e.g.
+// https://paperplane-api.vercel.app) in your hosting environment. The
+// file-convention OG/Twitter image routes (opengraph-image, twitter-image)
+// are resolved against this base, so it MUST be a public absolute URL for
+// social cards to render when the site is shared.
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export const viewport: Viewport = {
@@ -14,14 +19,17 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+const TITLE = "Paperplane — Where API Takes Flight";
+const DESCRIPTION =
+  "Compose requests, inspect responses, and organize API workflows in a calm workspace built for modern teams.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Paperplane — Where API Takes Flight",
+    default: TITLE,
     template: "%s | Paperplane",
   },
-  description:
-    "Compose requests, inspect responses, and organize API workflows in a calm workspace built for modern teams.",
+  description: DESCRIPTION,
   keywords: [
     "API testing",
     "REST client",
@@ -37,24 +45,17 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: siteUrl,
     siteName: "Paperplane",
-    title: "Paperplane — Where API Takes Flight",
-    description:
-      "Compose requests, inspect responses, and organize API workflows in a calm workspace built for modern teams.",
-    images: [
-      {
-        url: "/opengraph-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Paperplane — Where API Takes Flight",
-      },
-    ],
+    title: TITLE,
+    description: DESCRIPTION,
+    // og:image (+ width/height/alt/type) is emitted automatically
+    // by the app/opengraph-image.tsx file convention.
   },
   twitter: {
     card: "summary_large_image",
-    title: "Paperplane — Where API Takes Flight",
-    description:
-      "Compose requests, inspect responses, and organize API workflows in a calm workspace built for modern teams.",
-    images: ["/opengraph-image.png"],
+    title: TITLE,
+    description: DESCRIPTION,
+    // twitter:image (+ width/height/type) is emitted automatically
+    // by the app/twitter-image.tsx file convention.
     creator: "@paperplaneapp",
   },
   robots: {
